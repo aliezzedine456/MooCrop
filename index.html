@@ -13,7 +13,7 @@
   other code changes needed. Until you add a real provider, events are
   simply logged to the browser console via console.debug.
 -->
-<link rel="canonical" href="https://www.moocrop.example.com/index.html">
+<link rel="canonical" href="https://moocrop.com/">
 <!-- Google AdSense: required loader script (site-wide, one copy per page).
      Enables Auto ads (if turned on in your AdSense account) and any
      manual <ins class="adsbygoogle"> ad-unit blocks placed below. -->
@@ -685,25 +685,10 @@
   </div>
 
   <footer class="site-footer">
-    <button class="link-btn" id="privacyBtn" type="button">Privacy Policy</button>
+    <a class="link-btn" id="privacyBtn" href="/privacy.html">Privacy Policy</a>
     <span class="dot">•</span>
     <span>Photos are processed on your device and never uploaded.</span>
   </footer>
-</div>
-
-<!-- Privacy policy modal -->
-<div class="modal-overlay" id="privacyModal">
-  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="privacyTitle">
-    <div class="modal-head">
-      <h2 id="privacyTitle">Privacy Policy</h2>
-      <button class="modal-close" id="privacyCloseBtn" type="button" aria-label="Close privacy policy">✕</button>
-    </div>
-    <p><strong>Your photos stay on your device.</strong> MooCrop crops images entirely in your browser using the HTML5 Canvas API. Your photo is never uploaded, transmitted, or stored on any server — not even temporarily. When you close or refresh this page, the photo is gone.</p>
-    <p><strong>No account, no server storage.</strong> There's nothing to sign up for, and MooCrop itself doesn't collect, log, or retain any personal data or image content.</p>
-  
-    <p><strong>Analytics.</strong> If an analytics provider (e.g. Google Analytics, Plausible) has been added to this page, it may collect anonymous usage data such as page views and feature usage, per its own privacy policy.</p>
-
-  </div>
 </div>
 
 <!-- Download-interstitial ad modal. Shown when the person clicks
@@ -795,9 +780,6 @@
   const formatPill = document.getElementById('formatPill');
   const formatHint = document.getElementById('formatHint');
   const footnote = document.getElementById('footnote');
-  const privacyBtn = document.getElementById('privacyBtn');
-  const privacyModal = document.getElementById('privacyModal');
-  const privacyCloseBtn = document.getElementById('privacyCloseBtn');
   const downloadAdModal = document.getElementById('downloadAdModal');
   const downloadAdCloseBtn = document.getElementById('downloadAdCloseBtn');
   const downloadAdContinueBtn = document.getElementById('downloadAdContinueBtn');
@@ -1513,12 +1495,7 @@
     brightnessVal.textContent = '0'; contrastVal.textContent = '0';
   });
 
-  // ---------- Privacy modal ----------
-  privacyBtn.addEventListener('click', ()=> privacyModal.classList.add('show'));
-  privacyCloseBtn.addEventListener('click', ()=> privacyModal.classList.remove('show'));
-  privacyModal.addEventListener('click', e=>{ if(e.target === privacyModal) privacyModal.classList.remove('show'); });
   document.addEventListener('keydown', e=>{
-    if(e.key === 'Escape' && privacyModal.classList.contains('show')) privacyModal.classList.remove('show');
     if(e.key === 'Escape' && downloadAdModal.classList.contains('show')) downloadAdModal.classList.remove('show');
   });
 
