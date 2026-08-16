@@ -429,43 +429,28 @@
   }
   .site-footer .dot{opacity:0.6;}
 
-  /* ---------- Modal (privacy policy) ---------- */
-  .modal-overlay{
-    position:fixed;inset:0;
-    background:rgba(20,18,14,0.72);
-    display:flex;align-items:center;justify-content:center;
-    padding:20px;
-    z-index:999;
-    opacity:0;pointer-events:none;
-    transition:opacity .25s var(--ease);
+  /* ---------- About / FAQ content section ---------- */
+  .info-section{
+    background:var(--card);
+    border-radius:26px;
+    box-shadow:var(--shadow);
+    padding:36px 32px;
+    margin-top:26px;
   }
-  .modal-overlay.show{opacity:1;pointer-events:auto;}
-  .modal-card{
-    background:#fff;
-    border-radius:24px;
-    padding:26px;
-    max-width:400px;
-    width:100%;
-    box-shadow:0 24px 60px rgba(0,0,0,0.3);
-    transform:scale(0.9) translateY(10px);
-    transition:transform .3s var(--spring);
-    max-height:80vh;
-    overflow-y:auto;
+  .info-section h2{
+    font-family:'Fredoka',sans-serif;font-weight:600;font-size:20px;
+    margin:0 0 12px;color:var(--pasture-dark);
   }
-  .modal-overlay.show .modal-card{transform:scale(1) translateY(0);}
-  .modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
-  .modal-head h2{font-family:'Fredoka',sans-serif;font-size:19px;font-weight:600;margin:0;}
-  .modal-close{
-    background:var(--pasture-light);border:none;
-    width:30px;height:30px;border-radius:50%;
-    font-size:16px;color:var(--pasture-dark);cursor:pointer;
-    display:flex;align-items:center;justify-content:center;
-    transition:transform .15s var(--spring);
+  .info-section h2:not(:first-child){margin-top:30px;}
+  .info-section p{font-size:14.5px;line-height:1.7;color:var(--ink);margin:0 0 12px;}
+  .info-section ul{font-size:14.5px;line-height:1.7;color:var(--ink);margin:0 0 12px;padding-left:20px;}
+  .info-section li{margin-bottom:6px;}
+  .faq-item{margin-bottom:16px;}
+  .faq-item h3{font-family:'Fredoka',sans-serif;font-weight:600;font-size:15px;margin:0 0 6px;color:var(--ink);}
+  .faq-item p{margin:0;color:var(--muted);}
+  @media (max-width:640px){
+    .info-section{padding:26px 22px;border-radius:22px;}
   }
-  .modal-close:active{transform:scale(0.9);}
-  .modal-card p{font-size:13.5px;line-height:1.6;color:var(--ink);margin:0 0 12px;}
-  .modal-card p:last-of-type{margin-bottom:0;}
-  .modal-card strong{color:var(--ink);}
 </style>
 </head>
 <body>
@@ -684,34 +669,41 @@
     <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
   </div>
 
+  <section class="info-section" aria-labelledby="aboutHeading">
+    <h2 id="aboutHeading">About MooCrop</h2>
+    <p>MooCrop is a free, no-account image cropping tool that runs entirely in your web browser. There's nothing to install and nothing to sign up for — pick a photo, drag the crop box, and download the result. Because the cropping happens on your own device using the browser's built-in Canvas API, your photos are never uploaded to a server, which makes MooCrop a fast option for cropping anything you'd rather keep private, like ID photos, screenshots, or personal pictures.</p>
+
+    <h2>How it works</h2>
+    <p>Drop one or more photos onto the page, or tap "Choose photo(s)" to browse your device. Once a photo loads, drag the crop box to reposition it, or pull the corner handles to resize. You can switch between a free-form rectangle, a locked square, or a circle, and snap to common aspect ratios like 1:1, 4:3, or 16:9 for social media posts, profile pictures, or print sizes. Rotate or flip the image, nudge brightness and contrast, then set an exact pixel width and height if you need a precise output size. When you're happy with the result, hit Download — MooCrop exports a PNG (with transparency for circle crops) or JPG straight to your device. If you loaded several photos, they're bundled into a single ZIP so you don't have to download each one separately.</p>
+
+    <h2>Frequently asked questions</h2>
+    <div class="faq-item">
+      <h3>Are my photos uploaded anywhere?</h3>
+      <p>No. Every crop, rotation, and adjustment happens locally in your browser. Your images are never sent to MooCrop's servers or any third party as part of the cropping process.</p>
+    </div>
+    <div class="faq-item">
+      <h3>What image formats can I use?</h3>
+      <p>You can upload common formats like JPG, PNG, WebP, and GIF, and export the cropped result as a PNG or JPG.</p>
+    </div>
+    <div class="faq-item">
+      <h3>Can I crop more than one photo at a time?</h3>
+      <p>Yes. Select multiple files and MooCrop will let you adjust and crop each one, then bundle them into a single ZIP download.</p>
+    </div>
+    <div class="faq-item">
+      <h3>Is there a size or quality limit?</h3>
+      <p>MooCrop preserves your source image's resolution unless you set a custom output size, and exports PNGs losslessly. Very large batches depend on your device's available memory since everything is processed locally.</p>
+    </div>
+    <div class="faq-item">
+      <h3>Do I need to create an account?</h3>
+      <p>No account, no email, no sign-up. Just open the page and start cropping.</p>
+    </div>
+  </section>
+
   <footer class="site-footer">
     <a class="link-btn" id="privacyBtn" href="/privacy.html">Privacy Policy</a>
     <span class="dot">•</span>
     <span>Photos are processed on your device and never uploaded.</span>
   </footer>
-</div>
-
-<!-- Download-interstitial ad modal. Shown when the person clicks
-     Download, before the actual crop/export runs. Create a third
-     "Display ads" unit in AdSense named e.g.
-     "MooCrop - Download Interstitial" and paste its slot ID below. -->
-<div class="modal-overlay" id="downloadAdModal">
-  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="downloadAdTitle">
-    <div class="modal-head">
-      <h2 id="downloadAdTitle">Preparing your download…</h2>
-      <button class="modal-close" id="downloadAdCloseBtn" type="button" aria-label="Close">✕</button>
-    </div>
-    <span class="ad-tag">Advertisement</span>
-    <ins class="adsbygoogle"
-         style="display:block;width:100%;min-height:250px;"
-         data-ad-client="ca-pub-5678399918415741"
-         data-ad-slot="4106136621"
-         data-ad-format="auto"
-         data-full-width-responsive="true"></ins>
-    <button class="btn btn-primary btn-block" id="downloadAdContinueBtn" type="button" style="margin-top:16px;">
-      Continue to Download
-    </button>
-  </div>
 </div>
 
 <!-- JSZip: used only to bundle a multi-photo batch crop into one .zip
@@ -780,9 +772,6 @@
   const formatPill = document.getElementById('formatPill');
   const formatHint = document.getElementById('formatHint');
   const footnote = document.getElementById('footnote');
-  const downloadAdModal = document.getElementById('downloadAdModal');
-  const downloadAdCloseBtn = document.getElementById('downloadAdCloseBtn');
-  const downloadAdContinueBtn = document.getElementById('downloadAdContinueBtn');
   const statusLive = document.getElementById('statusLive');
 
   const MIN_PX = 10;
@@ -1495,32 +1484,10 @@
     brightnessVal.textContent = '0'; contrastVal.textContent = '0';
   });
 
-  document.addEventListener('keydown', e=>{
-    if(e.key === 'Escape' && downloadAdModal.classList.contains('show')) downloadAdModal.classList.remove('show');
-  });
-
-  // ---------- Download interstitial ad ----------
-  let downloadAdUnitLoaded = false;
-
+  // ---------- Download ----------
+  // Downloads are instant — no interstitial, no extra click required.
   downloadBtn.addEventListener('click', ()=>{
     trackEvent('download_clicked', {count: images.length, shape: state.shape, format: state.format});
-    downloadAdModal.classList.add('show');
-    // Only push the ad request the first time the modal is shown, so
-    // repeat downloads in one session don't request the slot again.
-    if(!downloadAdUnitLoaded){
-      try{ (window.adsbygoogle = window.adsbygoogle || []).push({}); }catch(e){}
-      downloadAdUnitLoaded = true;
-    }
-  });
-
-  function closeDownloadAdModal(){
-    downloadAdModal.classList.remove('show');
-  }
-  downloadAdCloseBtn.addEventListener('click', closeDownloadAdModal);
-  downloadAdModal.addEventListener('click', e=>{ if(e.target === downloadAdModal) closeDownloadAdModal(); });
-
-  downloadAdContinueBtn.addEventListener('click', ()=>{
-    closeDownloadAdModal();
     performDownload();
   });
 
