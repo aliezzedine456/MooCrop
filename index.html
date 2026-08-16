@@ -1,0 +1,1588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MooCrop — Free Online Image Cropper (No Upload, No Sign-Up)</title>
+<meta name="description" content="Free online image cropper. Crop photos to any size, aspect ratio, or shape (rectangle, square, circle) right in your browser — no upload, no sign-up. Batch crop, rotate, flip, adjust brightness/contrast, and download as PNG or JPG.">
+<!--
+  ANALYTICS: paste your Google Analytics (gtag.js) or Plausible/Fathom
+  snippet here. MooCrop's JS below auto-detects `window.gtag` or
+  `window.plausible` and starts sending events (photos loaded, crop
+  shape changed, download completed, JS errors) automatically — no
+  other code changes needed. Until you add a real provider, events are
+  simply logged to the browser console via console.debug.
+-->
+<link rel="canonical" href="https://www.moocrop.example.com/index.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#FBF7EF;
+    --card:#FFFFFF;
+    --ink:#2B2A28;
+    --muted:#948C7C;
+    --pasture:#5C8A5A;
+    --pasture-dark:#456B44;
+    --pasture-light:#E7F0E3;
+    --butter:#F0BD4B;
+    --blush:#E9A2A0;
+    --line:#EAE3D3;
+    --shadow: 0 10px 30px rgba(43,42,40,0.08);
+    --shadow-soft: 0 4px 14px rgba(43,42,40,0.06);
+    --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(circle at 15% 8%, rgba(92,138,90,0.07), transparent 40%),
+      radial-gradient(circle at 90% 90%, rgba(233,162,160,0.10), transparent 45%),
+      var(--cream);
+    color:var(--ink);
+    font-family:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100%;
+  }
+  .app{max-width:1080px;margin:0 auto;padding:20px 20px 60px;}
+
+  /* Screen-reader-only status announcer. Deliberately invisible — no
+     on-screen box — but read aloud by assistive tech when its text
+     changes (upload complete, crop downloaded, errors, etc). */
+  .visually-hidden{
+    position:absolute !important;
+    width:1px;height:1px;
+    padding:0;margin:-1px;
+    overflow:hidden;
+    clip:rect(0,0,0,0);
+    white-space:nowrap;
+    border:0;
+  }
+
+  /* ---------- Focus visibility (keyboard users) ---------- */
+  a:focus-visible, button:focus-visible, input:focus-visible,
+  .chip:focus-visible, .crop-box:focus-visible, .handle:focus-visible,
+  .thumb:focus-visible, .switch:focus-visible, .dropzone:focus-visible{
+    outline:3px solid var(--butter);
+    outline-offset:2px;
+  }
+
+  /* ---------- Topbar ---------- */
+  .topbar{
+    display:flex;align-items:center;gap:12px;
+    padding:10px 6px 26px;
+  }
+  .logo-mark{width:42px;height:42px;flex:0 0 auto;}
+  .brand{display:flex;flex-direction:column;line-height:1.1;}
+  .brand .name{font-family:'Fredoka',sans-serif;font-weight:600;font-size:22px;letter-spacing:-0.02em;}
+  .brand .tag{font-size:12.5px;color:var(--muted);}
+
+  /* ---------- Upload view ---------- */
+  .upload-view{
+    background:var(--card);
+    border-radius:28px;
+    box-shadow:var(--shadow);
+    padding:56px 32px;
+    text-align:center;
+    transition:transform .35s var(--spring), box-shadow .35s var(--ease);
+  }
+  .dropzone{
+    border:2px dashed var(--line);
+    border-radius:22px;
+    padding:44px 24px;
+    cursor:pointer;
+    transition:border-color .25s var(--ease), background .25s var(--ease);
+  }
+  .dropzone.drag{
+    border-color:var(--pasture);
+    background:var(--pasture-light);
+  }
+  .cow-hero{width:132px;height:auto;margin:0 auto 18px;display:block;animation:sway 4.5s ease-in-out infinite;}
+  @keyframes sway{
+    0%,100%{transform:rotate(-2deg) translateY(0);}
+    50%{transform:rotate(2deg) translateY(-4px);}
+  }
+  .upload-view h1{
+    font-family:'Fredoka',sans-serif;font-size:26px;font-weight:600;margin:4px 0 8px;letter-spacing:-0.01em;
+  }
+  .upload-view p{color:var(--muted);font-size:13.5px;margin:0 0 22px;}
+  .btn{
+    font-family:inherit;font-size:15px;font-weight:600;
+    border:none;border-radius:16px;padding:13px 26px;
+    cursor:pointer;
+    transition:transform .18s var(--spring), box-shadow .18s var(--ease), background .2s var(--ease), opacity .2s var(--ease);
+  }
+  .btn:active{transform:scale(0.95);}
+  .btn:disabled{opacity:.55;cursor:not-allowed;transform:none;}
+  .btn-primary{background:var(--pasture);color:#fff;box-shadow:0 6px 16px rgba(92,138,90,0.32);}
+  .btn-primary:hover{background:var(--pasture-dark);}
+  .btn-ghost{background:var(--pasture-light);color:var(--pasture-dark);}
+  .btn-ghost:hover{background:#dcebd8;}
+  .btn-block{width:100%;}
+  input[type=file]{display:none;}
+
+  /* ---------- Editor view ---------- */
+  .editor-view{
+    display:none;
+    gap:22px;
+    grid-template-columns: 1.55fr 1fr;
+    align-items:start;
+  }
+  .editor-view.active{display:grid;animation:fadeUp .4s var(--ease);}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+  .canvas-card{
+    background:var(--card);
+    border-radius:26px;
+    box-shadow:var(--shadow);
+    padding:22px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:16px;
+  }
+
+  /* ---------- Batch thumbnail strip ---------- */
+  .thumb-strip{
+    display:flex;gap:8px;
+    width:100%;
+    overflow-x:auto;
+    padding:2px;
+  }
+  .thumb{
+    position:relative;
+    flex:0 0 auto;
+    width:56px;height:56px;
+    border-radius:12px;
+    overflow:hidden;
+    border:2px solid transparent;
+    background:#FAF8F2;
+    cursor:pointer;
+    padding:0;
+  }
+  .thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+  .thumb.active{border-color:var(--pasture);}
+  .thumb .thumb-remove{
+    position:absolute;top:2px;right:2px;
+    width:17px;height:17px;
+    border-radius:50%;
+    background:rgba(20,18,14,.65);color:#fff;
+    font-size:10px;line-height:1;
+    display:flex;align-items:center;justify-content:center;
+    border:none;cursor:pointer;
+  }
+
+  .stage-outer{
+    width:100%;
+    display:flex;justify-content:center;align-items:center;
+    background:
+      linear-gradient(45deg, #f1ece1 25%, transparent 25%) -0px -0px/16px 16px,
+      linear-gradient(-45deg, #f1ece1 25%, transparent 25%) -0px 8px/16px 16px,
+      linear-gradient(45deg, transparent 75%, #f1ece1 75%) 8px -8px/16px 16px,
+      linear-gradient(-45deg, transparent 75%, #f1ece1 75%) -8px 0px/16px 16px,
+      #FAF8F2;
+    border-radius:18px;
+    padding:10px;
+    overflow:hidden;
+  }
+  .image-stage{
+    position:relative;
+    max-width:100%;
+    line-height:0;
+    touch-action:none;
+    user-select:none;
+  }
+  .image-stage img{
+    display:block;
+    max-width:100%;
+    max-height:56vh;
+    -webkit-user-drag:none;
+    pointer-events:none;
+    border-radius:2px;
+  }
+  .crop-box{
+    position:absolute;
+    box-shadow:0 0 0 9999px rgba(20,20,18,0.55);
+    border:1.5px solid rgba(255,255,255,0.95);
+    cursor:move;
+    touch-action:none;
+  }
+  .crop-box.circle{border-radius:50%;}
+  .crop-box .grid-line{position:absolute;background:rgba(255,255,255,0.35);}
+  .crop-box .gl-v1{left:33.333%;top:0;bottom:0;width:1px;}
+  .crop-box .gl-v2{left:66.666%;top:0;bottom:0;width:1px;}
+  .crop-box .gl-h1{top:33.333%;left:0;right:0;height:1px;}
+  .crop-box .gl-h2{top:66.666%;left:0;right:0;height:1px;}
+  .crop-box.circle .grid-line{display:none;}
+  .handle{
+    position:absolute;
+    width:22px;height:22px;
+    margin:-11px;
+    display:flex;align-items:center;justify-content:center;
+    touch-action:none;
+  }
+  .handle::after{
+    content:'';
+    width:13px;height:13px;
+    background:#fff;
+    border-radius:50%;
+    border:2.5px solid var(--pasture);
+    box-shadow:0 2px 6px rgba(0,0,0,0.25);
+    transition:transform .15s var(--spring);
+  }
+  .handle:active::after{transform:scale(1.25);}
+  .handle.nw{top:0;left:0;cursor:nwse-resize;}
+  .handle.ne{top:0;left:100%;cursor:nesw-resize;}
+  .handle.sw{top:100%;left:0;cursor:nesw-resize;}
+  .handle.se{top:100%;left:100%;cursor:nwse-resize;}
+
+  .hint-row{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;text-align:center;}
+  .hint-row svg{flex:0 0 auto;}
+
+  /* ---------- Controls panel ---------- */
+  .controls{
+    background:var(--card);
+    border-radius:26px;
+    box-shadow:var(--shadow);
+    padding:22px;
+    display:flex;
+    flex-direction:column;
+    gap:22px;
+  }
+  .ctrl-group label.title, .ctrl-group span.title{
+    font-family:'Fredoka',sans-serif;
+    font-weight:600;
+    font-size:14.5px;
+    display:block;
+    margin-bottom:10px;
+    color:var(--ink);
+  }
+  .segmented{
+    position:relative;
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    background:var(--pasture-light);
+    border-radius:14px;
+    padding:4px;
+  }
+  .segmented .pill{
+    position:absolute;
+    top:4px;bottom:4px;
+    width:calc(33.333% - 4px);
+    background:#fff;
+    border-radius:11px;
+    box-shadow:0 3px 10px rgba(0,0,0,0.08);
+    transition:transform .32s var(--spring);
+    left:2px;
+  }
+  .segmented button{
+    position:relative;z-index:1;
+    background:transparent;border:none;
+    font-family:inherit;font-size:13.5px;font-weight:600;
+    padding:9px 4px;border-radius:11px;cursor:pointer;
+    color:var(--muted);
+    transition:color .2s var(--ease);
+  }
+  .segmented button.active{color:var(--pasture-dark);}
+
+  .chip-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{
+    font-family:inherit;font-size:13px;font-weight:600;
+    padding:8px 14px;border-radius:12px;
+    border:1.5px solid var(--line);
+    background:#fff;color:var(--ink);
+    cursor:pointer;
+    transition:all .2s var(--ease);
+  }
+  .chip.active{border-color:var(--pasture);background:var(--pasture-light);color:var(--pasture-dark);}
+  .chip:active{transform:scale(0.95);}
+  .chip:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+
+  .segmented button:disabled{
+    color:var(--line) !important;
+    cursor:not-allowed;
+  }
+
+  .size-row{display:flex;align-items:center;gap:10px;}
+  .field{
+    flex:1;
+    display:flex;flex-direction:column;gap:5px;
+  }
+  .field label{display:block;font-size:11.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.03em;}
+  .field input{
+    font-family:inherit;font-size:14.5px;font-weight:600;
+    border:1.5px solid var(--line);
+    border-radius:12px;
+    padding:10px 12px;
+    width:100%;
+    color:var(--ink);
+    transition:border-color .2s var(--ease);
+  }
+  .field input:focus{outline:none;border-color:var(--pasture);}
+  .size-hint{font-size:11.5px;color:var(--muted);margin:8px 2px 0;}
+  .size-x{color:var(--muted);font-weight:600;padding-top:14px;}
+  .lock-row{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-top:12px;
+  }
+  .lock-row .label{font-size:13.5px;color:var(--ink);font-weight:500;}
+  .switch{
+    position:relative;width:44px;height:26px;flex:0 0 auto;
+    border-radius:999px;background:var(--line);cursor:pointer;
+    transition:background .25s var(--ease);
+  }
+  .switch.on{background:var(--pasture);}
+  .switch::after{
+    content:'';position:absolute;top:2px;left:2px;
+    width:22px;height:22px;border-radius:50%;background:#fff;
+    box-shadow:0 2px 5px rgba(0,0,0,0.2);
+    transition:transform .25s var(--spring);
+  }
+  .switch.on::after{transform:translateX(18px);}
+
+  /* ---------- Brightness / contrast sliders ---------- */
+  .slider-row{display:flex;flex-direction:column;gap:6px;}
+  .slider-row + .slider-row{margin-top:14px;}
+  .slider-row .slider-label{display:flex;justify-content:space-between;font-size:13px;font-weight:600;color:var(--ink);}
+  .slider-row .slider-label span.val{color:var(--muted);font-weight:600;}
+  .slider-row input[type=range]{width:100%;accent-color:var(--pasture);}
+  .reset-link{
+    background:none;border:none;font-family:inherit;
+    font-size:12.5px;font-weight:600;color:var(--pasture-dark);
+    text-decoration:underline;cursor:pointer;padding:4px 0 0;align-self:flex-start;
+  }
+
+  .divider{height:1px;background:var(--line);border:none;margin:0;}
+
+  .actions{display:flex;flex-direction:column;gap:10px;}
+  .actions .row{display:flex;gap:10px;}
+  .actions .row .btn{flex:1;}
+
+  .footnote{font-size:12px;color:var(--muted);line-height:1.5;text-align:center;}
+
+  @media (max-width:820px){
+    .editor-view.active{grid-template-columns:1fr;}
+  }
+
+  @media (max-width:480px){
+    .site-footer{
+      flex-direction:column;
+      text-align:center;
+      gap:4px;
+    }
+    .site-footer .dot{display:none;}
+  }
+
+  /* ---------- Ad slot (static, non-blocking) ---------- */
+  .ad-slot{
+    position:relative;
+    border:1.5px dashed var(--line);
+    border-radius:18px;
+    background:#FDFBF6;
+    padding:16px 18px;
+    margin:0 0 20px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+    gap:2px;
+    min-height:64px;
+    justify-content:center;
+  }
+  .ad-tag{
+    position:absolute;
+    top:-9px;left:14px;
+    background:var(--muted);
+    color:#fff;
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    padding:3px 8px;
+    border-radius:6px;
+  }
+  .ad-slot-body strong{display:block;font-size:13.5px;color:var(--ink);}
+  .ad-slot-body span{display:block;font-size:11.5px;color:var(--muted);margin-top:2px;}
+
+  /* ---------- Footer ---------- */
+  .site-footer{
+    margin-top:26px;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    flex-wrap:wrap;
+    font-size:12.5px;color:var(--muted);
+  }
+  .link-btn{
+    background:none;border:none;
+    font-family:inherit;font-size:12.5px;font-weight:600;
+    color:var(--pasture-dark);
+    text-decoration:underline;
+    cursor:pointer;
+    padding:2px 0;
+  }
+  .site-footer .dot{opacity:0.6;}
+
+  /* ---------- Modal (privacy policy) ---------- */
+  .modal-overlay{
+    position:fixed;inset:0;
+    background:rgba(20,18,14,0.72);
+    display:flex;align-items:center;justify-content:center;
+    padding:20px;
+    z-index:999;
+    opacity:0;pointer-events:none;
+    transition:opacity .25s var(--ease);
+  }
+  .modal-overlay.show{opacity:1;pointer-events:auto;}
+  .modal-card{
+    background:#fff;
+    border-radius:24px;
+    padding:26px;
+    max-width:400px;
+    width:100%;
+    box-shadow:0 24px 60px rgba(0,0,0,0.3);
+    transform:scale(0.9) translateY(10px);
+    transition:transform .3s var(--spring);
+    max-height:80vh;
+    overflow-y:auto;
+  }
+  .modal-overlay.show .modal-card{transform:scale(1) translateY(0);}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .modal-head h2{font-family:'Fredoka',sans-serif;font-size:19px;font-weight:600;margin:0;}
+  .modal-close{
+    background:var(--pasture-light);border:none;
+    width:30px;height:30px;border-radius:50%;
+    font-size:16px;color:var(--pasture-dark);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:transform .15s var(--spring);
+  }
+  .modal-close:active{transform:scale(0.9);}
+  .modal-card p{font-size:13.5px;line-height:1.6;color:var(--ink);margin:0 0 12px;}
+  .modal-card p:last-of-type{margin-bottom:0;}
+  .modal-card strong{color:var(--ink);}
+</style>
+</head>
+<body>
+
+<!-- Visually hidden live region: announces upload/crop/download status
+     and errors to screen readers. No visible box is ever shown. -->
+<div id="statusLive" class="visually-hidden" role="status" aria-live="polite"></div>
+
+<div class="app">
+  <div class="topbar">
+    <svg class="logo-mark" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="MooCrop logo">
+      <ellipse cx="50" cy="58" rx="38" ry="30" fill="#fff" stroke="#2B2A28" stroke-width="3"/>
+      <path d="M18 30 C10 22, 8 10, 14 6 C18 14, 22 20, 26 26 Z" fill="#EDE7D9" stroke="#2B2A28" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M82 30 C90 22, 92 10, 86 6 C82 14, 78 20, 74 26 Z" fill="#EDE7D9" stroke="#2B2A28" stroke-width="3" stroke-linejoin="round"/>
+      <ellipse cx="50" cy="68" rx="16" ry="12" fill="#E9A2A0" stroke="#2B2A28" stroke-width="3"/>
+      <circle cx="44" cy="68" r="1.8" fill="#2B2A28"/>
+      <circle cx="56" cy="68" r="1.8" fill="#2B2A28"/>
+      <ellipse cx="33" cy="46" rx="15" ry="9.5" fill="#2B2A28" transform="rotate(-25 33 46)"/>
+      <ellipse cx="67" cy="46" rx="15" ry="9.5" fill="#2B2A28" transform="rotate(25 67 46)"/>
+      <circle cx="33" cy="46" r="6" fill="#fff" stroke="#2B2A28" stroke-width="1.5"/>
+      <circle cx="33.1" cy="46.5" r="1.75" fill="#2B2A28"/>
+      <circle cx="32.2" cy="45.4" r="0.75" fill="#fff"/>
+      <circle cx="67" cy="46" r="6" fill="#fff" stroke="#2B2A28" stroke-width="1.5"/>
+      <circle cx="67.1" cy="46.5" r="1.75" fill="#2B2A28"/>
+      <circle cx="66.2" cy="45.4" r="0.75" fill="#fff"/>
+    </svg>
+    <div class="brand">
+      <span class="name">MooCrop</span>
+      <span class="tag">crop photos the udderly simple way</span>
+    </div>
+  </div>
+
+  <!-- AD SLOT: static, non-blocking banner. Replace this block's inner
+       markup with your ad network's banner code (e.g. Google AdSense
+       <ins> tag). Keep the "Advertisement" label visible for legal /
+       disclosure reasons. There is no interstitial ad in the download
+       flow — it added friction without much revenue upside, so
+       downloads are now instant. -->
+  <div class="ad-slot ad-slot-banner" id="topBannerAd">
+    <span class="ad-tag">Advertisement</span>
+    <div class="ad-slot-body">
+      <strong>Your banner ad goes here (e.g. 728×90)</strong>
+      <span>Connect an approved ad network to replace this placeholder.</span>
+    </div>
+  </div>
+
+  <!-- UPLOAD VIEW -->
+  <div id="uploadView" class="upload-view">
+    <div id="dropzone" class="dropzone" role="button" tabindex="0" aria-label="Choose one or more photos to crop">
+      <svg class="cow-hero" viewBox="0 0 220 190" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <ellipse cx="110" cy="115" rx="82" ry="58" fill="#fff" stroke="#2B2A28" stroke-width="4"/>
+        <path d="M38 57 C20 39, 16 13, 30 3 C38 21, 46 33, 56 45 Z" fill="#EDE7D9" stroke="#2B2A28" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M182 57 C200 39, 204 13, 190 3 C182 21, 174 33, 164 45 Z" fill="#EDE7D9" stroke="#2B2A28" stroke-width="4" stroke-linejoin="round"/>
+        <ellipse cx="110" cy="142" rx="32" ry="22" fill="#E9A2A0" stroke="#2B2A28" stroke-width="4"/>
+        <circle cx="100" cy="142" r="3.8" fill="#2B2A28"/>
+        <circle cx="120" cy="142" r="3.8" fill="#2B2A28"/>
+        <ellipse cx="78" cy="98" rx="31" ry="20" fill="#2B2A28" transform="rotate(-25 78 98)"/>
+        <ellipse cx="142" cy="98" rx="31" ry="20" fill="#2B2A28" transform="rotate(25 142 98)"/>
+        <circle cx="78" cy="98" r="11" fill="#fff" stroke="#2B2A28" stroke-width="2.5"/>
+        <circle cx="78.2" cy="98.8" r="3" fill="#2B2A28"/>
+        <circle cx="76.6" cy="96.7" r="1.3" fill="#fff"/>
+        <circle cx="142" cy="98" r="11" fill="#fff" stroke="#2B2A28" stroke-width="2.5"/>
+        <circle cx="142.2" cy="98.8" r="3" fill="#2B2A28"/>
+        <circle cx="140.6" cy="96.7" r="1.3" fill="#fff"/>
+      </svg>
+      <h1>Free Online Image Cropper</h1>
+      <p>Drop one or more photos, or tap to browse, then download as PNG or JPG — everything happens right here in your browser.</p>
+      <button class="btn btn-primary" id="browseBtn" type="button">Choose photo(s)</button>
+      <input type="file" id="fileInput" accept="image/*" multiple aria-hidden="true" tabindex="-1">
+    </div>
+  </div>
+
+  <!-- EDITOR VIEW -->
+  <div id="editorView" class="editor-view">
+    <div class="canvas-card">
+      <div class="thumb-strip" id="thumbStrip" role="group" aria-label="Uploaded photos" style="display:none;"></div>
+
+      <div class="stage-outer">
+        <div class="image-stage" id="imageStage">
+          <img id="sourceImg" alt="Your photo">
+          <div class="crop-box" id="cropBox" tabindex="0" role="group" aria-label="Crop area. Drag to move, or focus it and use the arrow keys.">
+            <div class="grid-line gl-v1"></div>
+            <div class="grid-line gl-v2"></div>
+            <div class="grid-line gl-h1"></div>
+            <div class="grid-line gl-h2"></div>
+            <div class="handle nw" data-corner="nw" tabindex="0" role="slider" aria-label="Resize crop from the top-left corner. Use arrow keys."></div>
+            <div class="handle ne" data-corner="ne" tabindex="0" role="slider" aria-label="Resize crop from the top-right corner. Use arrow keys."></div>
+            <div class="handle sw" data-corner="sw" tabindex="0" role="slider" aria-label="Resize crop from the bottom-left corner. Use arrow keys."></div>
+            <div class="handle se" data-corner="se" tabindex="0" role="slider" aria-label="Resize crop from the bottom-right corner. Use arrow keys."></div>
+          </div>
+        </div>
+      </div>
+      <div class="hint-row">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v18M3 12h18" stroke="#948C7C" stroke-width="2" stroke-linecap="round"/></svg>
+        Drag to move or resize the crop box — or tab to it and use the arrow keys.
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="ctrl-group">
+        <span class="title" id="shapeLabel">Shape</span>
+        <div class="segmented" id="shapeSeg" role="group" aria-labelledby="shapeLabel">
+          <div class="pill" id="shapePill"></div>
+          <button data-shape="rect" class="active" aria-pressed="true">Rectangle</button>
+          <button data-shape="square" aria-pressed="false">Square</button>
+          <button data-shape="circle" aria-pressed="false">Circle</button>
+        </div>
+      </div>
+
+      <div class="ctrl-group" id="ratioGroup">
+        <span class="title" id="ratioLabel">Aspect ratio</span>
+        <div class="chip-row" id="ratioChips" role="group" aria-labelledby="ratioLabel">
+          <button class="chip active" data-ratio="free" aria-pressed="true">Free</button>
+          <button class="chip" data-ratio="1:1" aria-pressed="false">1:1</button>
+          <button class="chip" data-ratio="4:3" aria-pressed="false">4:3</button>
+          <button class="chip" data-ratio="3:4" aria-pressed="false">3:4</button>
+          <button class="chip" data-ratio="16:9" aria-pressed="false">16:9</button>
+          <button class="chip" data-ratio="9:16" aria-pressed="false">9:16</button>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <div class="ctrl-group">
+        <span class="title" id="transformLabel">Rotate, flip &amp; history</span>
+        <div class="chip-row" role="group" aria-labelledby="transformLabel">
+          <button class="chip" id="rotateLeftBtn" type="button" aria-label="Rotate left 90 degrees">⟲ Rotate</button>
+          <button class="chip" id="rotateRightBtn" type="button" aria-label="Rotate right 90 degrees">⟳ Rotate</button>
+          <button class="chip" id="flipHBtn" type="button" aria-pressed="false">Flip horizontal</button>
+          <button class="chip" id="flipVBtn" type="button" aria-pressed="false">Flip vertical</button>
+          <button class="chip" id="undoBtn" type="button" disabled>Undo</button>
+          <button class="chip" id="redoBtn" type="button" disabled>Redo</button>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <div class="ctrl-group">
+        <span class="title" id="adjustLabel">Adjustments</span>
+        <div class="slider-row">
+          <label class="slider-label" for="brightnessInput">Brightness <span class="val" id="brightnessVal">0</span></label>
+          <input type="range" id="brightnessInput" min="-100" max="100" value="0" step="1">
+        </div>
+        <div class="slider-row">
+          <label class="slider-label" for="contrastInput">Contrast <span class="val" id="contrastVal">0</span></label>
+          <input type="range" id="contrastInput" min="-100" max="100" value="0" step="1">
+        </div>
+        <button class="reset-link" id="resetAdjustBtn" type="button">Reset adjustments</button>
+      </div>
+
+      <hr class="divider">
+
+      <div class="ctrl-group">
+        <span class="title" id="sizeLabel">Export size</span>
+        <div class="size-row">
+          <div class="field">
+            <label for="widthInput">Width (px)</label>
+            <input type="number" id="widthInput" min="10" placeholder="auto">
+          </div>
+          <span class="size-x" aria-hidden="true">×</span>
+          <div class="field">
+            <label for="heightInput">Height (px)</label>
+            <input type="number" id="heightInput" min="10" placeholder="auto">
+          </div>
+        </div>
+        <p class="size-hint" id="sizeHint"></p>
+        <div class="lock-row">
+          <span class="label" id="lockLabel">Lock ratio to crop box</span>
+          <div class="switch on" id="lockSwitch" role="switch" aria-checked="true" aria-labelledby="lockLabel" tabindex="0"></div>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <div class="ctrl-group">
+        <span class="title" id="formatLabel">File type</span>
+        <div class="segmented" id="formatSeg" style="grid-template-columns:repeat(2,1fr);" role="group" aria-labelledby="formatLabel">
+          <div class="pill" id="formatPill" style="width:calc(50% - 4px);"></div>
+          <button data-format="png" class="active" aria-pressed="true">PNG</button>
+          <button data-format="jpg" aria-pressed="false">JPG</button>
+        </div>
+        <p class="size-hint" id="formatHint">PNG keeps a transparent background for circle crops.</p>
+      </div>
+
+      <hr class="divider">
+
+      <div class="actions">
+        <div class="row">
+          <button class="btn btn-ghost" id="resetBtn" type="button">Reset crop</button>
+          <button class="btn btn-ghost" id="newPhotoBtn" type="button">New photo(s)</button>
+        </div>
+        <button class="btn btn-primary btn-block" id="downloadBtn" type="button">Download PNG</button>
+      </div>
+
+      <p class="footnote" id="footnote">Rectangle crop keeps a solid background. Circle crops export with a transparent background.</p>
+    </div>
+  </div>
+  <footer class="site-footer">
+    <button class="link-btn" id="privacyBtn" type="button">Privacy Policy</button>
+    <span class="dot">•</span>
+    <span>Photos are processed on your device and never uploaded.</span>
+  </footer>
+</div>
+
+<!-- Privacy policy modal -->
+<div class="modal-overlay" id="privacyModal">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="privacyTitle">
+    <div class="modal-head">
+      <h2 id="privacyTitle">Privacy Policy</h2>
+      <button class="modal-close" id="privacyCloseBtn" type="button" aria-label="Close privacy policy">✕</button>
+    </div>
+    <p><strong>Your photos stay on your device.</strong> MooCrop crops images entirely in your browser using the HTML5 Canvas API. Your photo is never uploaded, transmitted, or stored on any server — not even temporarily. When you close or refresh this page, the photo is gone.</p>
+    <p><strong>No account, no server storage.</strong> There's nothing to sign up for, and MooCrop itself doesn't collect, log, or retain any personal data or image content.</p>
+    <p><strong>Advertising.</strong> The ad space on this page is currently a placeholder. Once a real ad network (e.g. Google AdSense) is connected, that network may use cookies or device identifiers to serve and measure ads, per its own privacy policy. Visitors in the EU/UK/California and similar regions may have rights (e.g. under GDPR/CCPA) to opt out or request data deletion — those requests should go to the ad network, since MooCrop itself holds no ad data.</p>
+    <p><strong>Analytics.</strong> If an analytics provider (e.g. Google Analytics, Plausible) has been added to this page, it may collect anonymous usage data such as page views and feature usage, per its own privacy policy.</p>
+    <p><strong>Contact.</strong> Replace this line with a real contact email before publishing this page.</p>
+  </div>
+</div>
+
+<!-- JSZip: used only to bundle a multi-photo batch crop into one .zip
+     download. Loaded synchronously (no `defer`) so it's guaranteed
+     ready before a person can click Download. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+(function(){
+  // ---------- Analytics & error tracking ----------
+  // Every meaningful action funnels through trackEvent() so there's a
+  // single place to wire up real analytics later. Until a provider is
+  // added in <head>, events are just logged to the console.
+  const Analytics = {
+    track(name, data){
+      try{
+        if(window.gtag) window.gtag('event', name, data || {});
+        else if(window.plausible) window.plausible(name, {props: data || {}});
+        else console.debug('[MooCrop event]', name, data || {});
+      }catch(err){ /* analytics must never break the app */ }
+    }
+  };
+  function trackEvent(name, data){ Analytics.track(name, data); }
+
+  window.addEventListener('error', e=>{
+    console.error('[MooCrop error]', e.error || e.message);
+    trackEvent('js_error', {message: String(e.message || ''), source: e.filename || '', line: e.lineno || 0});
+  });
+  window.addEventListener('unhandledrejection', e=>{
+    console.error('[MooCrop unhandled rejection]', e.reason);
+    trackEvent('js_error', {message: String((e.reason && e.reason.message) || e.reason || '')});
+  });
+
+  // ---------- DOM refs ----------
+  const uploadView = document.getElementById('uploadView');
+  const editorView = document.getElementById('editorView');
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const browseBtn = document.getElementById('browseBtn');
+  const thumbStrip = document.getElementById('thumbStrip');
+  const imageStage = document.getElementById('imageStage');
+  const sourceImg = document.getElementById('sourceImg');
+  const cropBox = document.getElementById('cropBox');
+  const shapeSeg = document.getElementById('shapeSeg');
+  const shapePill = document.getElementById('shapePill');
+  const ratioGroup = document.getElementById('ratioGroup');
+  const ratioChips = document.getElementById('ratioChips');
+  const rotateLeftBtn = document.getElementById('rotateLeftBtn');
+  const rotateRightBtn = document.getElementById('rotateRightBtn');
+  const flipHBtn = document.getElementById('flipHBtn');
+  const flipVBtn = document.getElementById('flipVBtn');
+  const undoBtn = document.getElementById('undoBtn');
+  const redoBtn = document.getElementById('redoBtn');
+  const brightnessInput = document.getElementById('brightnessInput');
+  const contrastInput = document.getElementById('contrastInput');
+  const brightnessVal = document.getElementById('brightnessVal');
+  const contrastVal = document.getElementById('contrastVal');
+  const resetAdjustBtn = document.getElementById('resetAdjustBtn');
+  const widthInput = document.getElementById('widthInput');
+  const heightInput = document.getElementById('heightInput');
+  const sizeHint = document.getElementById('sizeHint');
+  const lockSwitch = document.getElementById('lockSwitch');
+  const resetBtn = document.getElementById('resetBtn');
+  const newPhotoBtn = document.getElementById('newPhotoBtn');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const formatSeg = document.getElementById('formatSeg');
+  const formatPill = document.getElementById('formatPill');
+  const formatHint = document.getElementById('formatHint');
+  const footnote = document.getElementById('footnote');
+  const privacyBtn = document.getElementById('privacyBtn');
+  const privacyModal = document.getElementById('privacyModal');
+  const privacyCloseBtn = document.getElementById('privacyCloseBtn');
+  const statusLive = document.getElementById('statusLive');
+
+  const MIN_PX = 10;
+
+  let images = [];      // {id, file, name, img: HTMLImageElement}
+  let activeIndex = 0;
+  let nextId = 1;
+
+  let state = {
+    shape: 'rect',        // rect | square | circle
+    ratio: null,          // number (w/h) or null for free
+    lockOutputRatio: true,
+    format: 'png',        // png | jpg
+    box: {x:0,y:0,w:0,h:0}, // display px, relative to stage
+    displayScale: 1,      // natural / display
+    naturalW: 0, naturalH: 0,
+    rotation: 0,           // 0 | 90 | 180 | 270 — clockwise
+    flipH: false,
+    flipV: false,
+    brightness: 0,         // -100..100
+    contrast: 0            // -100..100
+  };
+
+  let pendingFrac = null;      // carry crop box proportionally when switching photos
+  let pendingExactBox = null;  // restore an exact box after undo/redo
+  let forceFreshBox = false;   // rotate/flip changed geometry — start fresh
+
+  function announce(msg){
+    statusLive.textContent = '';
+    requestAnimationFrame(()=>{ statusLive.textContent = msg; });
+  }
+
+  // ---------- Upload handling ----------
+  browseBtn.addEventListener('click', () => fileInput.click());
+  dropzone.addEventListener('click', () => fileInput.click());
+  dropzone.addEventListener('keydown', e=>{
+    if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); fileInput.click(); }
+  });
+  fileInput.addEventListener('change', e => {
+    if(e.target.files && e.target.files.length) loadFiles(e.target.files);
+  });
+  ['dragenter','dragover'].forEach(evt=>{
+    dropzone.addEventListener(evt, e=>{ e.preventDefault(); dropzone.classList.add('drag'); });
+  });
+  ['dragleave','drop'].forEach(evt=>{
+    dropzone.addEventListener(evt, e=>{ e.preventDefault(); dropzone.classList.remove('drag'); });
+  });
+  dropzone.addEventListener('drop', e=>{
+    if(e.dataTransfer.files && e.dataTransfer.files.length) loadFiles(e.dataTransfer.files);
+  });
+
+  function loadFiles(fileList){
+    const files = Array.from(fileList).filter(f=>f.type.startsWith('image/'));
+    if(!files.length) return;
+    const startingFresh = images.length === 0;
+    let pending = files.length;
+    files.forEach(file=>{
+      const reader = new FileReader();
+      reader.onload = e=>{
+        const img = new Image();
+        img.onload = ()=>{
+          images.push({id: nextId++, file, name: file.name, img});
+          pending--;
+          renderThumbs();
+          if(pending === 0){
+            if(startingFresh) activeIndex = 0;
+            trackEvent('images_loaded', {count: images.length});
+            announce(`${images.length} photo${images.length===1?'':'s'} loaded.`);
+            if(startingFresh) openEditor(); else refreshPreview();
+          }
+        };
+        img.onerror = ()=>{
+          pending--;
+          announce('One of the selected files could not be read as an image.');
+        };
+        img.src = e.target.result;
+      };
+      reader.onerror = ()=>{ pending--; announce('One of the selected files could not be read.'); };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function openEditor(){
+    uploadView.style.display = 'none';
+    editorView.classList.add('active');
+    refreshPreview();
+  }
+
+  // ---------- Thumbnails (batch) ----------
+  function renderThumbs(){
+    thumbStrip.style.display = images.length > 1 ? 'flex' : 'none';
+    thumbStrip.innerHTML = '';
+    if(images.length <= 1) return;
+    images.forEach((item, idx)=>{
+      const btn = document.createElement('button');
+      btn.className = 'thumb' + (idx === activeIndex ? ' active' : '');
+      btn.type = 'button';
+      btn.setAttribute('aria-pressed', idx === activeIndex ? 'true' : 'false');
+      btn.setAttribute('aria-label', `Edit photo ${idx+1} of ${images.length}: ${item.name}`);
+      const img = document.createElement('img');
+      img.src = item.img.src;
+      img.alt = '';
+      btn.appendChild(img);
+      const rm = document.createElement('button');
+      rm.className = 'thumb-remove';
+      rm.type = 'button';
+      rm.setAttribute('aria-label', `Remove ${item.name} from batch`);
+      rm.textContent = '✕';
+      rm.addEventListener('click', ev=>{ ev.stopPropagation(); removeImage(idx); });
+      btn.appendChild(rm);
+      btn.addEventListener('click', ()=> switchActive(idx));
+      thumbStrip.appendChild(btn);
+    });
+  }
+
+  function switchActive(idx){
+    if(idx === activeIndex || idx < 0 || idx >= images.length) return;
+    const oldStage = stageSize();
+    if(oldStage.w && oldStage.h){
+      pendingFrac = {
+        x: state.box.x / oldStage.w, y: state.box.y / oldStage.h,
+        w: state.box.w / oldStage.w, h: state.box.h / oldStage.h
+      };
+    }
+    activeIndex = idx;
+    renderThumbs();
+    refreshPreview();
+  }
+
+  function removeImage(idx){
+    images.splice(idx, 1);
+    if(!images.length){
+      newPhotoBtn.click();
+      return;
+    }
+    if(activeIndex >= images.length) activeIndex = images.length - 1;
+    renderThumbs();
+    refreshPreview();
+    updateDownloadLabel();
+  }
+
+  // ---------- Orientation (rotate / flip) ----------
+  function orientedCanvasFor(imgEl){
+    const swapped = state.rotation === 90 || state.rotation === 270;
+    const w = swapped ? imgEl.naturalHeight : imgEl.naturalWidth;
+    const h = swapped ? imgEl.naturalWidth : imgEl.naturalHeight;
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const ctx = c.getContext('2d');
+    ctx.save();
+    ctx.translate(w/2, h/2);
+    ctx.rotate(state.rotation * Math.PI / 180);
+    ctx.scale(state.flipH ? -1 : 1, state.flipV ? -1 : 1);
+    ctx.drawImage(imgEl, -imgEl.naturalWidth/2, -imgEl.naturalHeight/2);
+    ctx.restore();
+    return c;
+  }
+
+  function filterCSS(){
+    return `brightness(${100 + state.brightness}%) contrast(${100 + state.contrast}%)`;
+  }
+
+  function activeImage(){ return images[activeIndex]; }
+
+  function refreshPreview(){
+    if(!activeImage()) return;
+    const oriented = orientedCanvasFor(activeImage().img);
+    state.naturalW = oriented.width;
+    state.naturalH = oriented.height;
+    widthInput.max = state.naturalW;
+    heightInput.max = state.naturalH;
+    sizeHint.textContent = `This photo allows ${MIN_PX}–${state.naturalW}px wide, ${MIN_PX}–${state.naturalH}px tall.`;
+    sourceImg.style.filter = filterCSS();
+    sourceImg.onload = ()=>{
+      requestAnimationFrame(()=> requestAnimationFrame(setupStage));
+    };
+    sourceImg.src = oriented.toDataURL();
+    sourceImg.alt = `Your photo (${activeIndex+1} of ${images.length})`;
+  }
+
+  function setupStage(){
+    // Clear any previously-set fixed pixel size before measuring. Leaving
+    // the old size in place while measuring clamps the new image to the
+    // previous image's dimensions (since max-width:100% is relative to
+    // this container), which made the photo render smaller and smaller
+    // with each rotation or window/orientation resize.
+    imageStage.style.width = '';
+    imageStage.style.height = '';
+    const rect = sourceImg.getBoundingClientRect();
+    imageStage.style.width = rect.width + 'px';
+    imageStage.style.height = rect.height + 'px';
+    state.displayScale = state.naturalW / rect.width;
+    const s = stageSize();
+
+    if(pendingExactBox){
+      state.box = clampBox({...pendingExactBox});
+      pendingExactBox = null;
+      renderBox(); updateSizeInputsFromBox();
+    } else if(forceFreshBox){
+      forceFreshBox = false;
+      pendingFrac = null;
+      resetCropBox(true);
+    } else if(pendingFrac){
+      state.box = clampBox({
+        x: pendingFrac.x * s.w, y: pendingFrac.y * s.h,
+        w: pendingFrac.w * s.w, h: pendingFrac.h * s.h
+      });
+      pendingFrac = null;
+      renderBox(); updateSizeInputsFromBox();
+    } else {
+      resetCropBox(true);
+    }
+
+    window.removeEventListener('resize', onResize);
+    window.addEventListener('resize', onResize);
+  }
+
+  function onResize(){
+    const oldW = imageStage.offsetWidth || 1;
+    // Same fix as setupStage(): clear the stale fixed size first so the
+    // browser re-measures the image against its actual current layout
+    // (e.g. after a device rotation or window resize) instead of the
+    // previous, now-stale, container size.
+    imageStage.style.width = '';
+    imageStage.style.height = '';
+    const rect = sourceImg.getBoundingClientRect();
+    const scaleChange = rect.width / oldW;
+    imageStage.style.width = rect.width + 'px';
+    imageStage.style.height = rect.height + 'px';
+    state.displayScale = state.naturalW / rect.width;
+    state.box.x *= scaleChange; state.box.y *= scaleChange;
+    state.box.w *= scaleChange; state.box.h *= scaleChange;
+    renderBox();
+  }
+
+  // ---------- Crop box geometry ----------
+  function stageSize(){
+    return { w: imageStage.offsetWidth, h: imageStage.offsetHeight };
+  }
+
+  function minDisplaySize(){
+    return Math.max(1, MIN_PX / (state.displayScale || 1));
+  }
+
+  function resetCropBox(skipHistory){
+    const s = stageSize();
+    let ratio = state.ratio;
+    let w, h;
+    if(ratio){
+      const maxW = s.w * 0.8, maxH = s.h * 0.8;
+      if(maxW / ratio <= maxH){ w = maxW; h = w / ratio; }
+      else { h = maxH; w = h * ratio; }
+    } else {
+      w = s.w * 0.7; h = s.h * 0.7;
+    }
+    state.box = { x:(s.w - w)/2, y:(s.h - h)/2, w, h };
+    renderBox();
+    updateSizeInputsFromBox();
+    if(!skipHistory) pushHistory();
+    else pushHistory(true); // seed history without duplicating
+  }
+
+  function renderBox(){
+    cropBox.style.left = state.box.x + 'px';
+    cropBox.style.top = state.box.y + 'px';
+    cropBox.style.width = state.box.w + 'px';
+    cropBox.style.height = state.box.h + 'px';
+    cropBox.classList.toggle('circle', state.shape === 'circle');
+  }
+
+  function updateSizeInputsFromBox(){
+    const scale = state.displayScale || 1;
+    widthInput.value = Math.round(state.box.w * scale);
+    heightInput.value = Math.round(state.box.h * scale);
+  }
+
+  function clampBox(b){
+    const s = stageSize();
+    const minSize = minDisplaySize();
+    b.w = Math.max(minSize, Math.min(b.w, s.w));
+    b.h = Math.max(minSize, Math.min(b.h, s.h));
+    b.x = Math.max(0, Math.min(b.x, s.w - b.w));
+    b.y = Math.max(0, Math.min(b.y, s.h - b.h));
+    return b;
+  }
+
+  // ---------- Undo / redo (crop box position & size) ----------
+  let historyStack = [];
+  let historyIndex = -1;
+
+  function pushHistory(seedOnly){
+    const snap = JSON.stringify(state.box);
+    if(historyIndex >= 0 && historyStack[historyIndex] === snap) { updateUndoRedoButtons(); return; }
+    if(seedOnly && historyIndex === -1){
+      historyStack = [snap];
+      historyIndex = 0;
+    } else if(!seedOnly){
+      historyStack = historyStack.slice(0, historyIndex + 1);
+      historyStack.push(snap);
+      historyIndex = historyStack.length - 1;
+    }
+    updateUndoRedoButtons();
+  }
+
+  function undo(){
+    if(historyIndex <= 0) return;
+    historyIndex--;
+    state.box = clampBox(JSON.parse(historyStack[historyIndex]));
+    renderBox(); updateSizeInputsFromBox(); updateUndoRedoButtons();
+    announce('Undid last crop change.');
+  }
+  function redo(){
+    if(historyIndex >= historyStack.length - 1) return;
+    historyIndex++;
+    state.box = clampBox(JSON.parse(historyStack[historyIndex]));
+    renderBox(); updateSizeInputsFromBox(); updateUndoRedoButtons();
+    announce('Redid crop change.');
+  }
+  function updateUndoRedoButtons(){
+    undoBtn.disabled = historyIndex <= 0;
+    redoBtn.disabled = historyIndex >= historyStack.length - 1;
+  }
+  undoBtn.addEventListener('click', undo);
+  redoBtn.addEventListener('click', redo);
+  document.addEventListener('keydown', e=>{
+    const mod = e.ctrlKey || e.metaKey;
+    if(!mod) return;
+    const key = e.key.toLowerCase();
+    if(key === 'z' && !e.shiftKey){ e.preventDefault(); undo(); }
+    else if((key === 'z' && e.shiftKey) || key === 'y'){ e.preventDefault(); redo(); }
+  });
+
+  // ---------- Dragging: move ----------
+  let dragMode = null;
+  let dragStart = null;
+  let boxStart = null;
+
+  cropBox.addEventListener('pointerdown', e=>{
+    if(e.target.classList.contains('handle')) return;
+    dragMode = 'move';
+    dragStart = {x:e.clientX, y:e.clientY};
+    boxStart = {...state.box};
+    cropBox.setPointerCapture(e.pointerId);
+  });
+
+  cropBox.querySelectorAll('.handle').forEach(h=>{
+    h.addEventListener('pointerdown', e=>{
+      e.stopPropagation();
+      dragMode = h.dataset.corner;
+      dragStart = {x:e.clientX, y:e.clientY};
+      boxStart = {...state.box};
+      h.setPointerCapture(e.pointerId);
+    });
+  });
+
+  window.addEventListener('pointermove', e=>{
+    if(!dragMode) return;
+    const dx = e.clientX - dragStart.x;
+    const dy = e.clientY - dragStart.y;
+    if(dragMode === 'move'){
+      state.box = clampBox({...boxStart, x: boxStart.x + dx, y: boxStart.y + dy});
+    } else {
+      state.box = clampBox(resizeCorner(dragMode, boxStart, dx, dy));
+    }
+    renderBox();
+    updateSizeInputsFromBox();
+  });
+
+  window.addEventListener('pointerup', ()=>{
+    if(dragMode) pushHistory();
+    dragMode = null;
+  });
+
+  function resizeCorner(corner, b, dx, dy){
+    const ratio = currentRatio();
+    const minSize = minDisplaySize();
+    let x=b.x, y=b.y, w=b.w, h=b.h;
+    let newW, newH, newX, newY;
+    switch(corner){
+      case 'se': newW = w + dx; newH = ratio ? newW / ratio : h + dy; newX = x; newY = y; break;
+      case 'nw': newW = w - dx; newH = ratio ? newW / ratio : h - dy; newX = x + w - newW; newY = y + h - newH; break;
+      case 'ne': newW = w + dx; newH = ratio ? newW / ratio : h - dy; newX = x; newY = y + h - newH; break;
+      case 'sw': newW = w - dx; newH = ratio ? newW / ratio : h + dy; newX = x + w - newW; newY = y; break;
+    }
+    if(newW < minSize) newW = minSize;
+    if(newH < minSize) newH = minSize;
+    return {x:newX, y:newY, w:newW, h:newH};
+  }
+
+  function currentRatio(){
+    if(state.shape === 'square' || state.shape === 'circle') return 1;
+    return state.ratio;
+  }
+
+  // ---------- Keyboard nudge (crop box + handles) ----------
+  const ARROW_KEYS = ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'];
+  cropBox.addEventListener('keydown', e=>{
+    if(e.target !== cropBox) return; // let handle keydown handlers own their own events
+    if(!ARROW_KEYS.includes(e.key)) return;
+    e.preventDefault();
+    const step = e.shiftKey ? 20 : 5;
+    let nb = {...state.box};
+    if(e.key === 'ArrowUp') nb.y -= step;
+    if(e.key === 'ArrowDown') nb.y += step;
+    if(e.key === 'ArrowLeft') nb.x -= step;
+    if(e.key === 'ArrowRight') nb.x += step;
+    state.box = clampBox(nb);
+    renderBox(); updateSizeInputsFromBox();
+  });
+  cropBox.addEventListener('keyup', e=>{ if(e.target === cropBox && ARROW_KEYS.includes(e.key)) pushHistory(); });
+
+  cropBox.querySelectorAll('.handle').forEach(h=>{
+    h.addEventListener('keydown', e=>{
+      if(!ARROW_KEYS.includes(e.key)) return;
+      e.preventDefault();
+      const step = e.shiftKey ? 20 : 5;
+      let dx = 0, dy = 0;
+      if(e.key === 'ArrowUp') dy = -step;
+      if(e.key === 'ArrowDown') dy = step;
+      if(e.key === 'ArrowLeft') dx = -step;
+      if(e.key === 'ArrowRight') dx = step;
+      state.box = clampBox(resizeCorner(h.dataset.corner, state.box, dx, dy));
+      renderBox(); updateSizeInputsFromBox();
+    });
+    h.addEventListener('keyup', e=>{ if(ARROW_KEYS.includes(e.key)) pushHistory(); });
+  });
+
+  // ---------- Shape segmented control ----------
+  function positionPill(){
+    const buttons = shapeSeg.querySelectorAll('button');
+    const idx = [...buttons].findIndex(b=>b.classList.contains('active'));
+    shapePill.style.transform = `translateX(${idx * 100}%)`;
+  }
+  shapeSeg.querySelectorAll('button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      shapeSeg.querySelectorAll('button').forEach(b=>{ b.classList.remove('active'); b.setAttribute('aria-pressed','false'); });
+      btn.classList.add('active');
+      btn.setAttribute('aria-pressed','true');
+      state.shape = btn.dataset.shape;
+      positionPill();
+      ratioGroup.style.display = state.shape === 'rect' ? '' : 'none';
+      if(state.shape !== 'rect'){ state.ratio = 1; }
+      else {
+        const activeChip = ratioChips.querySelector('.chip.active');
+        state.ratio = activeChip && activeChip.dataset.ratio !== 'free' ? parseRatio(activeChip.dataset.ratio) : null;
+      }
+      footnote.textContent = state.shape === 'circle'
+        ? 'Circle crops export as transparent-background PNGs.'
+        : 'Rectangle and square crops keep a solid photo background.';
+      resetCropBox();
+      syncFormatAvailability();
+      trackEvent('shape_changed', {shape: state.shape});
+    });
+  });
+  positionPill();
+
+  function syncFormatAvailability(){
+    const jpgBtn = formatSeg.querySelector('[data-format="jpg"]');
+    const pngBtn = formatSeg.querySelector('[data-format="png"]');
+    if(state.shape === 'circle'){
+      jpgBtn.disabled = true;
+      if(state.format === 'jpg'){
+        state.format = 'png';
+        pngBtn.classList.add('active'); pngBtn.setAttribute('aria-pressed','true');
+        jpgBtn.classList.remove('active'); jpgBtn.setAttribute('aria-pressed','false');
+        positionFormatPill();
+        updateDownloadLabel();
+      }
+      formatHint.textContent = 'Circle crops always export as PNG — JPG can\'t store a transparent background.';
+    } else {
+      jpgBtn.disabled = false;
+      formatHint.textContent = state.format === 'jpg'
+        ? 'JPG has no transparency, so a solid background is used.'
+        : 'PNG keeps a transparent background for circle crops.';
+    }
+  }
+
+  // ---------- File type (PNG / JPG) ----------
+  function positionFormatPill(){
+    const buttons = formatSeg.querySelectorAll('button');
+    const idx = [...buttons].findIndex(b=>b.classList.contains('active'));
+    formatPill.style.transform = `translateX(${idx * 100}%)`;
+  }
+  formatSeg.querySelectorAll('button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      if(btn.disabled) return;
+      formatSeg.querySelectorAll('button').forEach(b=>{ b.classList.remove('active'); b.setAttribute('aria-pressed','false'); });
+      btn.classList.add('active');
+      btn.setAttribute('aria-pressed','true');
+      state.format = btn.dataset.format;
+      positionFormatPill();
+      updateDownloadLabel();
+      formatHint.textContent = state.format === 'jpg'
+        ? 'JPG has no transparency, so a solid background is used.'
+        : 'PNG keeps a transparent background for circle crops.';
+      trackEvent('format_changed', {format: state.format});
+    });
+  });
+  positionFormatPill();
+  syncFormatAvailability();
+
+  function updateDownloadLabel(){
+    downloadBtn.textContent = images.length > 1
+      ? `Download All (${images.length}) as ZIP`
+      : `Download ${state.format.toUpperCase()}`;
+  }
+
+  function parseRatio(str){
+    const [a,b] = str.split(':').map(Number);
+    return a / b;
+  }
+
+  ratioChips.querySelectorAll('.chip').forEach(chip=>{
+    chip.addEventListener('click', ()=>{
+      ratioChips.querySelectorAll('.chip').forEach(c=>{ c.classList.remove('active'); c.setAttribute('aria-pressed','false'); });
+      chip.classList.add('active');
+      chip.setAttribute('aria-pressed','true');
+      state.ratio = chip.dataset.ratio === 'free' ? null : parseRatio(chip.dataset.ratio);
+      resetCropBox();
+    });
+  });
+
+  // ---------- Rotate / flip ----------
+  rotateLeftBtn.addEventListener('click', ()=>{
+    state.rotation = (state.rotation + 270) % 360;
+    forceFreshBox = true;
+    refreshPreview();
+    announce('Rotated left.');
+    trackEvent('rotate', {direction:'left'});
+  });
+  rotateRightBtn.addEventListener('click', ()=>{
+    state.rotation = (state.rotation + 90) % 360;
+    forceFreshBox = true;
+    refreshPreview();
+    announce('Rotated right.');
+    trackEvent('rotate', {direction:'right'});
+  });
+  flipHBtn.addEventListener('click', ()=>{
+    state.flipH = !state.flipH;
+    flipHBtn.setAttribute('aria-pressed', String(state.flipH));
+    forceFreshBox = true;
+    refreshPreview();
+    announce(state.flipH ? 'Flipped horizontally.' : 'Horizontal flip removed.');
+    trackEvent('flip', {axis:'horizontal', on: state.flipH});
+  });
+  flipVBtn.addEventListener('click', ()=>{
+    state.flipV = !state.flipV;
+    flipVBtn.setAttribute('aria-pressed', String(state.flipV));
+    forceFreshBox = true;
+    refreshPreview();
+    announce(state.flipV ? 'Flipped vertically.' : 'Vertical flip removed.');
+    trackEvent('flip', {axis:'vertical', on: state.flipV});
+  });
+
+  // ---------- Brightness / contrast ----------
+  brightnessInput.addEventListener('input', ()=>{
+    state.brightness = parseInt(brightnessInput.value, 10);
+    brightnessVal.textContent = state.brightness;
+    sourceImg.style.filter = filterCSS();
+  });
+  contrastInput.addEventListener('input', ()=>{
+    state.contrast = parseInt(contrastInput.value, 10);
+    contrastVal.textContent = state.contrast;
+    sourceImg.style.filter = filterCSS();
+  });
+  resetAdjustBtn.addEventListener('click', ()=>{
+    state.brightness = 0; state.contrast = 0;
+    brightnessInput.value = 0; contrastInput.value = 0;
+    brightnessVal.textContent = '0'; contrastVal.textContent = '0';
+    sourceImg.style.filter = filterCSS();
+  });
+
+  // ---------- Custom export size inputs ----------
+  function clampToImage(val, maxVal){
+    if(!isFinite(val) || val <= 0) return null;
+    return Math.round(Math.min(Math.max(val, MIN_PX), maxVal || 99999));
+  }
+
+  function handleWidthChange(){
+    let w = clampToImage(parseFloat(widthInput.value), state.naturalW);
+    if(w === null) return;
+    widthInput.value = w;
+    if(state.lockOutputRatio){
+      const r = boxRatio();
+      let h = clampToImage(Math.round(w / r), state.naturalH);
+      if(h !== null) heightInput.value = h;
+    }
+    applyCustomSizeToBox();
+    pushHistory();
+  }
+  function handleHeightChange(){
+    let h = clampToImage(parseFloat(heightInput.value), state.naturalH);
+    if(h === null) return;
+    heightInput.value = h;
+    if(state.lockOutputRatio){
+      const r = boxRatio();
+      let w = clampToImage(Math.round(h * r), state.naturalW);
+      if(w !== null) widthInput.value = w;
+    }
+    applyCustomSizeToBox();
+    pushHistory();
+  }
+
+  function liveWidthInput(){
+    const raw = parseFloat(widthInput.value);
+    if(!isFinite(raw) || raw <= 0) return;
+    const w = Math.round(Math.min(raw, state.naturalW || 99999));
+    if(state.lockOutputRatio){
+      const r = boxRatio();
+      const h = Math.round(Math.min(w / r, state.naturalH || 99999));
+      if(h > 0) heightInput.value = h;
+    }
+    applyCustomSizeToBox();
+  }
+  function liveHeightInput(){
+    const raw = parseFloat(heightInput.value);
+    if(!isFinite(raw) || raw <= 0) return;
+    const h = Math.round(Math.min(raw, state.naturalH || 99999));
+    if(state.lockOutputRatio){
+      const r = boxRatio();
+      const w = Math.round(Math.min(h * r, state.naturalW || 99999));
+      if(w > 0) widthInput.value = w;
+    }
+    applyCustomSizeToBox();
+  }
+
+  widthInput.addEventListener('input', liveWidthInput);
+  widthInput.addEventListener('change', handleWidthChange);
+  widthInput.addEventListener('blur', handleWidthChange);
+  heightInput.addEventListener('input', liveHeightInput);
+  heightInput.addEventListener('change', handleHeightChange);
+  heightInput.addEventListener('blur', handleHeightChange);
+
+  function toggleLock(){
+    state.lockOutputRatio = !state.lockOutputRatio;
+    lockSwitch.classList.toggle('on', state.lockOutputRatio);
+    lockSwitch.setAttribute('aria-checked', String(state.lockOutputRatio));
+  }
+  lockSwitch.addEventListener('click', toggleLock);
+  lockSwitch.addEventListener('keydown', e=>{
+    if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggleLock(); }
+  });
+
+  function boxRatio(){
+    return state.box.w / state.box.h || 1;
+  }
+
+  function applyCustomSizeToBox(){
+    const w = parseFloat(widthInput.value);
+    const h = parseFloat(heightInput.value);
+    if(!w || !h) return;
+    let effW = w, effH = h;
+    if(state.shape !== 'rect'){
+      const d = Math.min(w, h);
+      effW = d; effH = d;
+    } else {
+      ratioChips.querySelectorAll('.chip').forEach(c=>{ c.classList.remove('active'); c.setAttribute('aria-pressed','false'); });
+      state.ratio = w / h;
+    }
+    applyExactSizeKeepCenter(effW, effH);
+    updateSizeInputsFromBox();
+    pulseBox();
+  }
+
+  function applyExactSizeKeepCenter(nativeW, nativeH){
+    const scale = state.displayScale || 1;
+    const dispW = nativeW / scale;
+    const dispH = nativeH / scale;
+    const cx = state.box.x + state.box.w/2;
+    const cy = state.box.y + state.box.h/2;
+    state.box = clampBox({x: cx - dispW/2, y: cy - dispH/2, w: dispW, h: dispH});
+    renderBox();
+  }
+
+  function pulseBox(){
+    cropBox.style.transition = 'filter .15s ease';
+    cropBox.style.filter = 'brightness(1.35)';
+    setTimeout(()=>{ cropBox.style.filter = ''; }, 180);
+  }
+
+  // ---------- Reset / New photo(s) ----------
+  resetBtn.addEventListener('click', ()=>{
+    widthInput.value = '';
+    heightInput.value = '';
+    state.rotation = 0; state.flipH = false; state.flipV = false;
+    state.brightness = 0; state.contrast = 0;
+    brightnessInput.value = 0; contrastInput.value = 0;
+    brightnessVal.textContent = '0'; contrastVal.textContent = '0';
+    flipHBtn.setAttribute('aria-pressed','false');
+    flipVBtn.setAttribute('aria-pressed','false');
+    forceFreshBox = true;
+    refreshPreview();
+    announce('Crop reset.');
+  });
+
+  newPhotoBtn.addEventListener('click', ()=>{
+    editorView.classList.remove('active');
+    uploadView.style.display = '';
+    fileInput.value = '';
+    widthInput.value = '';
+    heightInput.value = '';
+    images = [];
+    activeIndex = 0;
+    historyStack = []; historyIndex = -1;
+    updateUndoRedoButtons();
+    renderThumbs();
+    state.rotation = 0; state.flipH = false; state.flipV = false;
+    state.brightness = 0; state.contrast = 0;
+    brightnessInput.value = 0; contrastInput.value = 0;
+    brightnessVal.textContent = '0'; contrastVal.textContent = '0';
+  });
+
+  // ---------- Privacy modal ----------
+  privacyBtn.addEventListener('click', ()=> privacyModal.classList.add('show'));
+  privacyCloseBtn.addEventListener('click', ()=> privacyModal.classList.remove('show'));
+  privacyModal.addEventListener('click', e=>{ if(e.target === privacyModal) privacyModal.classList.remove('show'); });
+  document.addEventListener('keydown', e=>{
+    if(e.key === 'Escape' && privacyModal.classList.contains('show')) privacyModal.classList.remove('show');
+  });
+
+  // ---------- Download / crop (instant — no interstitial ad wait) ----------
+  downloadBtn.addEventListener('click', ()=>{
+    trackEvent('download_clicked', {count: images.length, shape: state.shape, format: state.format});
+    performDownload();
+  });
+
+  function triggerBlobDownload(blob, filename){
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 4000);
+  }
+
+  async function cropOneImage(item){
+    const stage = stageSize();
+    const fracX = state.box.x / stage.w, fracY = state.box.y / stage.h;
+    const fracW = state.box.w / stage.w, fracH = state.box.h / stage.h;
+
+    const oriented = orientedCanvasFor(item.img);
+    let sx = fracX * oriented.width, sy = fracY * oriented.height;
+    let sw = Math.max(1, fracW * oriented.width), sh = Math.max(1, fracH * oriented.height);
+
+    const customW = parseInt(widthInput.value, 10);
+    const customH = parseInt(heightInput.value, 10);
+    const useCustomSize = !!(customW && customH);
+
+    let outW = useCustomSize ? customW : Math.round(sw);
+    let outH = useCustomSize ? customH : Math.round(sh);
+    if(state.shape === 'circle'){
+      const d = Math.min(outW, outH);
+      outW = d; outH = d;
+    }
+    outW = Math.max(1, outW);
+    outH = Math.max(1, outH);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = outW; canvas.height = outH;
+    const ctx = canvas.getContext('2d');
+    ctx.filter = filterCSS();
+    ctx.drawImage(oriented, sx, sy, sw, sh, 0, 0, outW, outH);
+    ctx.filter = 'none';
+
+    if(state.shape === 'circle'){
+      ctx.globalCompositeOperation = 'destination-in';
+      ctx.beginPath();
+      ctx.arc(outW/2, outH/2, Math.min(outW,outH)/2, 0, Math.PI*2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.globalCompositeOperation = 'source-over';
+    }
+
+    const isJpg = state.format === 'jpg' && state.shape !== 'circle';
+    let exportCanvas = canvas;
+    if(isJpg){
+      exportCanvas = document.createElement('canvas');
+      exportCanvas.width = outW; exportCanvas.height = outH;
+      const jctx = exportCanvas.getContext('2d');
+      jctx.fillStyle = '#ffffff';
+      jctx.fillRect(0, 0, outW, outH);
+      jctx.drawImage(canvas, 0, 0);
+    }
+
+    const mimeType = isJpg ? 'image/jpeg' : 'image/png';
+    const extension = isJpg ? 'jpg' : 'png';
+    const quality = isJpg ? 0.92 : undefined;
+
+    const blob = await new Promise(resolve => exportCanvas.toBlob(resolve, mimeType, quality));
+    const baseName = (item.name || 'photo').replace(/\.[^./\\]+$/, '');
+    return { blob, filename: `moocrop-${baseName || 'photo'}.${extension}` };
+  }
+
+  async function performDownload(){
+    if(!images.length) return;
+    downloadBtn.disabled = true;
+    const originalLabel = downloadBtn.textContent;
+    downloadBtn.textContent = images.length > 1 ? 'Preparing ZIP…' : 'Preparing…';
+    try{
+      const results = [];
+      for(const item of images){
+        results.push(await cropOneImage(item));
+      }
+
+      if(results.length === 1){
+        triggerBlobDownload(results[0].blob, results[0].filename);
+      } else if(window.JSZip){
+        const zip = new JSZip();
+        results.forEach(r => zip.file(r.filename, r.blob));
+        const zipBlob = await zip.generateAsync({type:'blob'});
+        triggerBlobDownload(zipBlob, `moocrop-batch-${Date.now()}.zip`);
+      } else {
+        // ZIP library failed to load (e.g. offline) — fall back to
+        // downloading each cropped photo individually rather than losing
+        // the person's work.
+        results.forEach(r => triggerBlobDownload(r.blob, r.filename));
+      }
+
+      announce(results.length > 1
+        ? `${results.length} photos cropped and downloaded.`
+        : 'Photo cropped and downloaded.');
+      trackEvent('download_completed', {count: results.length, shape: state.shape, format: state.format});
+    } catch(err){
+      console.error('MooCrop export failed:', err);
+      announce('Something went wrong while cropping. Please try again.');
+      trackEvent('download_error', {message: String((err && err.message) || err)});
+    } finally {
+      downloadBtn.disabled = false;
+      updateDownloadLabel();
+    }
+  }
+
+})();
+</script>
+</body>
+</html>
