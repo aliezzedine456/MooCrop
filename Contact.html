@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Privacy Policy — MooCrop</title>
-<meta name="description" content="MooCrop's privacy policy: how the free online image cropper handles your photos, cookies, analytics, and advertising data.">
-<link rel="canonical" href="https://moocrop.com/privacy.html">
+<title>Contact Us — MooCrop</title>
+<meta name="description" content="Get in touch with the MooCrop team with questions, feedback, or bug reports about our free browser-based image cropper.">
+<link rel="canonical" href="https://moocrop.com/contact.html">
+<link rel="icon" type="image/png" href="/icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -52,8 +53,6 @@
   .updated{color:var(--muted);font-size:13px;margin:0 0 28px;}
   h2{font-family:'Fredoka',sans-serif;font-weight:600;font-size:18px;margin:28px 0 10px;color:var(--pasture-dark);}
   p{font-size:14.5px;line-height:1.7;margin:0 0 12px;}
-  ul{font-size:14.5px;line-height:1.7;margin:0 0 12px;padding-left:20px;}
-  li{margin-bottom:6px;}
   a{color:var(--pasture-dark);}
   .callout{
     background:var(--pasture-light);
@@ -64,6 +63,28 @@
     line-height:1.6;
   }
   .callout strong{color:var(--pasture-dark);}
+  .contact-card{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    background:var(--pasture-light);
+    border-radius:16px;
+    padding:18px 20px;
+    margin:16px 0 24px;
+    text-decoration:none;
+  }
+  .contact-card .icon{
+    width:40px;height:40px;flex:0 0 auto;
+    background:#fff;
+    border-radius:12px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .contact-card .text{display:flex;flex-direction:column;}
+  .contact-card .label{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.03em;}
+  .contact-card .value{font-family:'Fredoka',sans-serif;font-size:16px;font-weight:600;color:var(--pasture-dark);}
+  .faq-item{margin-bottom:16px;}
+  .faq-item h3{font-family:'Fredoka',sans-serif;font-weight:600;font-size:14.5px;margin:0 0 4px;color:var(--ink);}
+  .faq-item p{font-size:13.5px;color:var(--muted);margin:0;}
   .site-nav{display:flex;gap:16px;flex-wrap:wrap;margin-top:28px;font-size:13.5px;font-weight:600;}
   .site-nav a{color:var(--pasture-dark);text-decoration:none;}
   .site-nav a:hover{text-decoration:underline;}
@@ -109,50 +130,41 @@
   </div>
 
   <div class="card">
-    <h1>Privacy Policy</h1>
-    <p class="updated">Last updated: August 16, 2026</p>
+    <h1>Contact Us</h1>
+    <p class="updated">We read every message</p>
 
     <div class="callout">
-      <strong>The short version:</strong> your photos never leave your device. MooCrop crops images entirely in your browser using the HTML5 Canvas API — nothing is uploaded, transmitted, or stored on any server. This page explains what limited data is collected around that (analytics, cookies, and advertising) and your rights over it.
+      <strong>Have a question, found a bug, or want to suggest a feature?</strong> Reach out any time — we're a small team and try to reply within a few business days.
     </div>
 
-    <h2>1. Photos and files you crop</h2>
-    <p>MooCrop's core cropping tool runs entirely client-side, in your browser. When you select or drop a photo, it is processed locally on your device using JavaScript and the Canvas API. At no point is the image file sent to MooCrop's servers or any third party for the purpose of cropping it. Closing or refreshing the page removes the photo from memory.</p>
+    <a class="contact-card" href="mailto:hello@moocrop.com">
+      <span class="icon" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 6h18v12H3z" stroke="#456B44" stroke-width="1.8"/><path d="M3 7l9 6 9-6" stroke="#456B44" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+      <span class="text">
+        <span class="label">Email</span>
+        <span class="value">hello@moocrop.com</span>
+      </span>
+    </a>
 
-    <h2>2. Cookies and similar technologies</h2>
-    <p>MooCrop itself does not set functional cookies to operate the cropping tool. However, third-party services embedded on this page — such as advertising and analytics providers described below — may set cookies or use similar technologies (like local storage or device identifiers) in your browser, subject to their own policies and to the consent choices you make in our cookie consent banner.</p>
-
-    <h2>3. Advertising (Google AdSense)</h2>
-    <p>This site displays ads served by Google AdSense. Google and its advertising partners may use cookies and similar technologies to serve ads based on your prior visits to this or other websites, and to measure ad performance. If you are located in the European Economic Area, the UK, or Switzerland, you will be shown a consent banner before any non-essential advertising cookies are set, in line with Google's EU user consent policy.</p>
-    <p>You can learn more about how Google uses data from sites that use its services, and manage your ad personalization settings, here:</p>
-    <ul>
-      <li><a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener">How Google uses information from sites that use its services</a></li>
-      <li><a href="https://adssettings.google.com" target="_blank" rel="noopener">Google Ads Settings</a> — manage or opt out of personalized advertising</li>
-      <li><a href="https://www.aboutads.info/choices/" target="_blank" rel="noopener">Digital Advertising Alliance opt-out</a></li>
-    </ul>
-
-    <h2>4. Analytics</h2>
-    <p>If an analytics provider (such as Google Analytics or Plausible) is active on this site, it may collect anonymous or pseudonymous usage data — for example, page views, general device/browser type, and feature usage (like which crop shape or export format was used) — to help us understand how the tool is used and to fix problems. This data is not linked to the contents of any photo you crop, since photos are never transmitted in the first place.</p>
-
-    <h2>5. Your choices and rights</h2>
-    <p>Depending on your location, you may have rights under laws such as the GDPR (EEA), UK GDPR, or similar regional privacy laws, including the right to:</p>
-    <ul>
-      <li>See what data is held about you by our third-party advertising or analytics providers</li>
-      <li>Withdraw consent for advertising cookies at any time via the consent banner or the links in Section 3</li>
-      <li>Object to or restrict certain processing carried out by those third parties</li>
-    </ul>
-    <p>Because MooCrop itself does not create user accounts or store personal data on its own servers, most of these rights are exercised directly with the third-party provider (e.g. Google) rather than with us.</p>
-
-    <h2>6. Children's privacy</h2>
-    <p>MooCrop is not directed at children under 13 (or the relevant age of digital consent in your region), and we do not knowingly collect personal data from children.</p>
-
-    <h2>7. Changes to this policy</h2>
-    <p>We may update this privacy policy from time to time to reflect changes in the tools we use or in applicable law. The "Last updated" date at the top of this page will always reflect the latest revision.</p>
+    <h2>Before you write in</h2>
+    <div class="faq-item">
+      <h3>Bug reports</h3>
+      <p>Please include your browser (e.g. Chrome, Safari), device (desktop or mobile), and what you were trying to do — it helps us track things down faster.</p>
+    </div>
+    <div class="faq-item">
+      <h3>Privacy questions</h3>
+      <p>For questions about data, cookies, or advertising, see our <a href="/privacy.html">Privacy Policy</a> first — it covers most common questions.</p>
+    </div>
+    <div class="faq-item">
+      <h3>Business or partnership inquiries</h3>
+      <p>Feel free to use the same email address above and note "Business inquiry" in your subject line.</p>
+    </div>
 
     <div class="site-nav">
       <a href="/">Home</a>
       <a href="/about.html">About Us</a>
-      <a href="/contact.html">Contact Us</a>
+      <a href="/privacy.html">Privacy Policy</a>
     </div>
 
     <a class="back" href="/">← Back to MooCrop</a>

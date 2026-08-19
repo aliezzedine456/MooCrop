@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Privacy Policy — MooCrop</title>
-<meta name="description" content="MooCrop's privacy policy: how the free online image cropper handles your photos, cookies, analytics, and advertising data.">
-<link rel="canonical" href="https://moocrop.com/privacy.html">
+<title>About Us — MooCrop</title>
+<meta name="description" content="About MooCrop: a free, privacy-first, browser-based image cropping tool. Learn why we built it and how it works.">
+<link rel="canonical" href="https://moocrop.com/about.html">
+<link rel="icon" type="image/png" href="/icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -64,6 +65,25 @@
     line-height:1.6;
   }
   .callout strong{color:var(--pasture-dark);}
+  .value-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+    margin:16px 0 24px;
+  }
+  .value-card{
+    background:var(--pasture-light);
+    border-radius:16px;
+    padding:16px 18px;
+  }
+  .value-card h3{
+    font-family:'Fredoka',sans-serif;
+    font-weight:600;
+    font-size:14.5px;
+    margin:0 0 6px;
+    color:var(--pasture-dark);
+  }
+  .value-card p{font-size:13.5px;margin:0;color:var(--ink);}
   .site-nav{display:flex;gap:16px;flex-wrap:wrap;margin-top:28px;font-size:13.5px;font-weight:600;}
   .site-nav a{color:var(--pasture-dark);text-decoration:none;}
   .site-nav a:hover{text-decoration:underline;}
@@ -79,6 +99,7 @@
   @media (max-width:640px){
     .card{padding:28px 22px;border-radius:22px;}
     h1{font-size:24px;}
+    .value-grid{grid-template-columns:1fr;}
   }
 </style>
 </head>
@@ -109,50 +130,46 @@
   </div>
 
   <div class="card">
-    <h1>Privacy Policy</h1>
-    <p class="updated">Last updated: August 16, 2026</p>
+    <h1>About MooCrop</h1>
+    <p class="updated">Who we are and why we built this</p>
 
     <div class="callout">
-      <strong>The short version:</strong> your photos never leave your device. MooCrop crops images entirely in your browser using the HTML5 Canvas API — nothing is uploaded, transmitted, or stored on any server. This page explains what limited data is collected around that (analytics, cookies, and advertising) and your rights over it.
+      <strong>In short:</strong> MooCrop is a small, independently-run web tool for cropping and resizing photos entirely in your browser — no uploads, no accounts, and no cost.
     </div>
 
-    <h2>1. Photos and files you crop</h2>
-    <p>MooCrop's core cropping tool runs entirely client-side, in your browser. When you select or drop a photo, it is processed locally on your device using JavaScript and the Canvas API. At no point is the image file sent to MooCrop's servers or any third party for the purpose of cropping it. Closing or refreshing the page removes the photo from memory.</p>
+    <h2>Why we built it</h2>
+    <p>Most online photo croppers ask you to upload your picture to a server before you can do anything with it. For a quick, everyday task like cropping a profile picture or resizing a screenshot, that always felt like more than necessary — both slower and a needless privacy trade-off. We built MooCrop to solve that: it uses your browser's own Canvas API to do the cropping locally, on your device, so the tool works instantly and your photos never have to leave your computer or phone.</p>
 
-    <h2>2. Cookies and similar technologies</h2>
-    <p>MooCrop itself does not set functional cookies to operate the cropping tool. However, third-party services embedded on this page — such as advertising and analytics providers described below — may set cookies or use similar technologies (like local storage or device identifiers) in your browser, subject to their own policies and to the consent choices you make in our cookie consent banner.</p>
+    <h2>What we care about</h2>
+    <div class="value-grid">
+      <div class="value-card">
+        <h3>Privacy by design</h3>
+        <p>Photos are processed on-device. Nothing is uploaded for cropping to happen.</p>
+      </div>
+      <div class="value-card">
+        <h3>Free, no account</h3>
+        <p>No sign-up, no paywall, no email required to use the tool.</p>
+      </div>
+      <div class="value-card">
+        <h3>Fast and simple</h3>
+        <p>One page, clear controls, and a result in seconds — no clutter.</p>
+      </div>
+      <div class="value-card">
+        <h3>Honest about ads</h3>
+        <p>Display ads help cover hosting costs. They're clearly labeled and never mixed into the tool itself.</p>
+      </div>
+    </div>
 
-    <h2>3. Advertising (Google AdSense)</h2>
-    <p>This site displays ads served by Google AdSense. Google and its advertising partners may use cookies and similar technologies to serve ads based on your prior visits to this or other websites, and to measure ad performance. If you are located in the European Economic Area, the UK, or Switzerland, you will be shown a consent banner before any non-essential advertising cookies are set, in line with Google's EU user consent policy.</p>
-    <p>You can learn more about how Google uses data from sites that use its services, and manage your ad personalization settings, here:</p>
-    <ul>
-      <li><a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener">How Google uses information from sites that use its services</a></li>
-      <li><a href="https://adssettings.google.com" target="_blank" rel="noopener">Google Ads Settings</a> — manage or opt out of personalized advertising</li>
-      <li><a href="https://www.aboutads.info/choices/" target="_blank" rel="noopener">Digital Advertising Alliance opt-out</a></li>
-    </ul>
+    <h2>How the site is run</h2>
+    <p>MooCrop is built and maintained as an independent web project. It's a static, client-side tool — there's no server-side database of user photos or accounts to manage, which keeps things simple and keeps your data out of the equation entirely. We support the cost of running the site through display advertising, which you can read more about in our <a href="/privacy.html">Privacy Policy</a>.</p>
 
-    <h2>4. Analytics</h2>
-    <p>If an analytics provider (such as Google Analytics or Plausible) is active on this site, it may collect anonymous or pseudonymous usage data — for example, page views, general device/browser type, and feature usage (like which crop shape or export format was used) — to help us understand how the tool is used and to fix problems. This data is not linked to the contents of any photo you crop, since photos are never transmitted in the first place.</p>
-
-    <h2>5. Your choices and rights</h2>
-    <p>Depending on your location, you may have rights under laws such as the GDPR (EEA), UK GDPR, or similar regional privacy laws, including the right to:</p>
-    <ul>
-      <li>See what data is held about you by our third-party advertising or analytics providers</li>
-      <li>Withdraw consent for advertising cookies at any time via the consent banner or the links in Section 3</li>
-      <li>Object to or restrict certain processing carried out by those third parties</li>
-    </ul>
-    <p>Because MooCrop itself does not create user accounts or store personal data on its own servers, most of these rights are exercised directly with the third-party provider (e.g. Google) rather than with us.</p>
-
-    <h2>6. Children's privacy</h2>
-    <p>MooCrop is not directed at children under 13 (or the relevant age of digital consent in your region), and we do not knowingly collect personal data from children.</p>
-
-    <h2>7. Changes to this policy</h2>
-    <p>We may update this privacy policy from time to time to reflect changes in the tools we use or in applicable law. The "Last updated" date at the top of this page will always reflect the latest revision.</p>
+    <h2>Get in touch</h2>
+    <p>Questions, feedback, or found a bug? We'd like to hear about it — visit our <a href="/contact.html">Contact page</a> to reach us.</p>
 
     <div class="site-nav">
       <a href="/">Home</a>
-      <a href="/about.html">About Us</a>
       <a href="/contact.html">Contact Us</a>
+      <a href="/privacy.html">Privacy Policy</a>
     </div>
 
     <a class="back" href="/">← Back to MooCrop</a>
