@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>MooCrop — Free Online Image Cropper (No Upload, No Sign-Up)</title>
-<meta name="description" content="Free online image cropper. Crop photos to any size, aspect ratio, or shape (rectangle, square, circle) right in your browser — no upload, no sign-up. Batch crop, rotate, flip, adjust brightness/contrast, and download as PNG or JPG.">
+<meta name="description" content="Free online image cropper. Crop photos to any size, aspect ratio, or shape (rectangle, square, circle) right in your browser — no upload, no sign-up. Batch crop, rotate, flip, adjust brightness/contrast, apply filters, use social-media size presets, and download as PNG, JPG, or WebP with adjustable compression.">
 <!--
   ANALYTICS: paste your Google Analytics (gtag.js) or Plausible/Fathom
   snippet here. MooCrop's JS below auto-detects `window.gtag` or
@@ -15,6 +15,8 @@
 -->
 <link rel="canonical" href="https://moocrop.com/">
 <link rel="icon" type="image/png" href="/icon.png">
+<link rel="shortcut icon" href="/icon.png">
+<link rel="apple-touch-icon" href="/icon.png">
 <!-- Google AdSense: required loader script (site-wide, one copy per page).
      Enables Auto ads (if turned on in your AdSense account) and any
      manual <ins class="adsbygoogle"> ad-unit blocks placed below. -->
@@ -452,6 +454,58 @@
   @media (max-width:640px){
     .info-section{padding:26px 22px;border-radius:22px;}
   }
+
+  /* ---------- Preset chips (with dimensions as sub-label) ---------- */
+  .preset-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .preset-chip{
+    font-family:inherit;
+    padding:8px 12px;border-radius:12px;
+    border:1.5px solid var(--line);
+    background:#fff;color:var(--ink);
+    cursor:pointer;text-align:left;
+    transition:all .2s var(--ease);
+    display:flex;flex-direction:column;gap:1px;
+    line-height:1.25;
+  }
+  .preset-chip .p-name{font-size:12.5px;font-weight:700;}
+  .preset-chip .p-dim{font-size:10.5px;color:var(--muted);font-weight:600;}
+  .preset-chip.active{border-color:var(--pasture);background:var(--pasture-light);}
+  .preset-chip.active .p-name{color:var(--pasture-dark);}
+  .preset-chip:active{transform:scale(0.96);}
+
+  /* ---------- Filter swatches ---------- */
+  .filter-row{display:flex;flex-wrap:wrap;gap:10px;}
+  .filter-swatch{
+    display:flex;flex-direction:column;align-items:center;gap:6px;
+    background:none;border:none;cursor:pointer;
+    font-family:inherit;padding:0;
+    width:60px;
+  }
+  .filter-swatch .swatch-img{
+    width:52px;height:52px;border-radius:14px;
+    background-size:cover;background-position:center;
+    border:2.5px solid transparent;
+    box-shadow:0 2px 8px rgba(43,42,40,0.12);
+    transition:border-color .2s var(--ease), transform .15s var(--spring);
+  }
+  .filter-swatch.active .swatch-img{border-color:var(--pasture);transform:scale(1.06);}
+  .filter-swatch span.f-label{font-size:11px;font-weight:600;color:var(--muted);}
+  .filter-swatch.active span.f-label{color:var(--pasture-dark);}
+
+  /* ---------- Quality slider + estimated size ---------- */
+  .quality-row{margin-top:14px;}
+  .quality-row .size-est{color:var(--pasture-dark);font-weight:700;}
+
+  .badge-free{
+    display:inline-block;
+    background:var(--butter);
+    color:#2B2A28;
+    font-size:9.5px;font-weight:800;
+    letter-spacing:0.03em;text-transform:uppercase;
+    padding:2px 7px;border-radius:6px;
+    margin-left:6px;
+    vertical-align:middle;
+  }
 </style>
 </head>
 <body>
@@ -524,7 +578,7 @@
         <circle cx="140.6" cy="96.7" r="1.3" fill="#fff"/>
       </svg>
       <h1>Free Online Image Cropper</h1>
-      <p>Drop one or more photos, or tap to browse, then download as PNG or JPG — everything happens right here in your browser.</p>
+      <p>Drop one or more photos, or tap to browse, then crop, filter, and download as PNG, JPG, or WebP — everything happens right here in your browser.</p>
       <button class="btn btn-primary" id="browseBtn" type="button">Choose photo(s)</button>
       <input type="file" id="fileInput" accept="image/*" multiple aria-hidden="true" tabindex="-1">
     </div>
@@ -582,6 +636,22 @@
       <hr class="divider">
 
       <div class="ctrl-group">
+        <span class="title" id="presetLabel">Social &amp; platform presets<span class="badge-free">Free</span></span>
+        <div class="preset-row" id="presetChips" role="group" aria-labelledby="presetLabel">
+          <button class="preset-chip" type="button" data-w="1080" data-h="1080" data-shape="square"><span class="p-name">Instagram Post</span><span class="p-dim">1080×1080</span></button>
+          <button class="preset-chip" type="button" data-w="1080" data-h="1920" data-shape="rect"><span class="p-name">Story / Reel</span><span class="p-dim">1080×1920</span></button>
+          <button class="preset-chip" type="button" data-w="1280" data-h="720" data-shape="rect"><span class="p-name">YouTube Thumb</span><span class="p-dim">1280×720</span></button>
+          <button class="preset-chip" type="button" data-w="1500" data-h="500" data-shape="rect"><span class="p-name">X / Twitter Header</span><span class="p-dim">1500×500</span></button>
+          <button class="preset-chip" type="button" data-w="1584" data-h="396" data-shape="rect"><span class="p-name">LinkedIn Banner</span><span class="p-dim">1584×396</span></button>
+          <button class="preset-chip" type="button" data-w="820" data-h="312" data-shape="rect"><span class="p-name">Facebook Cover</span><span class="p-dim">820×312</span></button>
+          <button class="preset-chip" type="button" data-w="512" data-h="512" data-shape="circle"><span class="p-name">Profile Picture</span><span class="p-dim">512×512 round</span></button>
+          <button class="preset-chip" type="button" data-w="2480" data-h="3508" data-shape="rect"><span class="p-name">A4 Print</span><span class="p-dim">2480×3508</span></button>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <div class="ctrl-group">
         <span class="title" id="transformLabel">Rotate, flip &amp; history</span>
         <div class="chip-row" role="group" aria-labelledby="transformLabel">
           <button class="chip" id="rotateLeftBtn" type="button" aria-label="Rotate left 90 degrees">⟲ Rotate</button>
@@ -611,6 +681,38 @@
       <hr class="divider">
 
       <div class="ctrl-group">
+        <span class="title" id="filterLabel">Filters<span class="badge-free">Free</span></span>
+        <div class="filter-row" id="filterRow" role="group" aria-labelledby="filterLabel">
+          <button class="filter-swatch active" type="button" data-filter="none" aria-pressed="true">
+            <span class="swatch-img" style="background-image:url('data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2252%22 height=%2252%22%3E%3Crect width=%2252%22 height=%2252%22 fill=%22%23E9A2A0%22/%3E%3Ccircle cx=%2226%22 cy=%2226%22 r=%2210%22 fill=%22%232B2A28%22/%3E%3C/svg%3E');"></span>
+            <span class="f-label">None</span>
+          </button>
+          <button class="filter-swatch" type="button" data-filter="grayscale" aria-pressed="false">
+            <span class="swatch-img" style="background-image:url('data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2252%22 height=%2252%22%3E%3Crect width=%2252%22 height=%2252%22 fill=%22%23bbbbbb%22/%3E%3Ccircle cx=%2226%22 cy=%2226%22 r=%2210%22 fill=%22%23333333%22/%3E%3C/svg%3E');"></span>
+            <span class="f-label">B&amp;W</span>
+          </button>
+          <button class="filter-swatch" type="button" data-filter="sepia" aria-pressed="false">
+            <span class="swatch-img" style="background-image:url('data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2252%22 height=%2252%22%3E%3Crect width=%2252%22 height=%2252%22 fill=%22%23D8B27C%22/%3E%3Ccircle cx=%2226%22 cy=%2226%22 r=%2210%22 fill=%22%235C4326%22/%3E%3C/svg%3E');"></span>
+            <span class="f-label">Sepia</span>
+          </button>
+          <button class="filter-swatch" type="button" data-filter="vintage" aria-pressed="false">
+            <span class="swatch-img" style="background-image:url('data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2252%22 height=%2252%22%3E%3Crect width=%2252%22 height=%2252%22 fill=%22%23CDB183%22/%3E%3Ccircle cx=%2226%22 cy=%2226%22 r=%2210%22 fill=%22%234a3c28%22/%3E%3C/svg%3E');"></span>
+            <span class="f-label">Vintage</span>
+          </button>
+          <button class="filter-swatch" type="button" data-filter="vivid" aria-pressed="false">
+            <span class="swatch-img" style="background-image:url('data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2252%22 height=%2252%22%3E%3Crect width=%2252%22 height=%2252%22 fill=%22%23E9748E%22/%3E%3Ccircle cx=%2226%22 cy=%2226%22 r=%2210%22 fill=%22%232B2A28%22/%3E%3C/svg%3E');"></span>
+            <span class="f-label">Vivid</span>
+          </button>
+          <button class="filter-swatch" type="button" data-filter="cool" aria-pressed="false">
+            <span class="swatch-img" style="background-image:url('data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2252%22 height=%2252%22%3E%3Crect width=%2252%22 height=%2252%22 fill=%22%237CA8D8%22/%3E%3Ccircle cx=%2226%22 cy=%2226%22 r=%2210%22 fill=%22%23223047%22/%3E%3C/svg%3E');"></span>
+            <span class="f-label">Cool</span>
+          </button>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <div class="ctrl-group">
         <span class="title" id="sizeLabel">Export size</span>
         <div class="size-row">
           <div class="field">
@@ -633,13 +735,19 @@
       <hr class="divider">
 
       <div class="ctrl-group">
-        <span class="title" id="formatLabel">File type</span>
-        <div class="segmented" id="formatSeg" style="grid-template-columns:repeat(2,1fr);" role="group" aria-labelledby="formatLabel">
-          <div class="pill" id="formatPill" style="width:calc(50% - 4px);"></div>
+        <span class="title" id="formatLabel">File type<span class="badge-free">Free</span></span>
+        <div class="segmented" id="formatSeg" role="group" aria-labelledby="formatLabel">
+          <div class="pill" id="formatPill"></div>
           <button data-format="png" class="active" aria-pressed="true">PNG</button>
           <button data-format="jpg" aria-pressed="false">JPG</button>
+          <button data-format="webp" aria-pressed="false">WebP</button>
         </div>
         <p class="size-hint" id="formatHint">PNG keeps a transparent background for circle crops.</p>
+        <div class="slider-row quality-row" id="qualityRow" style="display:none;">
+          <label class="slider-label" for="qualityInput">Compression quality <span class="val" id="qualityVal">92%</span></label>
+          <input type="range" id="qualityInput" min="30" max="100" value="92" step="1">
+          <p class="size-hint">Estimated file size: <span class="size-est" id="sizeEstimate">—</span> — this kind of compression control is usually a paid feature elsewhere.</p>
+        </div>
       </div>
 
       <hr class="divider">
@@ -675,7 +783,16 @@
     <p>MooCrop is a free, no-account image cropping tool that runs entirely in your web browser. There's nothing to install and nothing to sign up for — pick a photo, drag the crop box, and download the result. Because the cropping happens on your own device using the browser's built-in Canvas API, your photos are never uploaded to a server, which makes MooCrop a fast option for cropping anything you'd rather keep private, like ID photos, screenshots, or personal pictures.</p>
 
     <h2>How it works</h2>
-    <p>Drop one or more photos onto the page, or tap "Choose photo(s)" to browse your device. Once a photo loads, drag the crop box to reposition it, or pull the corner handles to resize. You can switch between a free-form rectangle, a locked square, or a circle, and snap to common aspect ratios like 1:1, 4:3, or 16:9 for social media posts, profile pictures, or print sizes. Rotate or flip the image, nudge brightness and contrast, then set an exact pixel width and height if you need a precise output size. When you're happy with the result, hit Download — MooCrop exports a PNG (with transparency for circle crops) or JPG straight to your device. If you loaded several photos, they're bundled into a single ZIP so you don't have to download each one separately.</p>
+    <p>Drop one or more photos onto the page, or tap "Choose photo(s)" to browse your device. Once a photo loads, drag the crop box to reposition it, or pull the corner handles to resize. You can switch between a free-form rectangle, a locked square, or a circle, snap to common aspect ratios like 1:1, 4:3, or 16:9, or pick an exact social-media preset (Instagram post, Story, YouTube thumbnail, LinkedIn banner, and more). Rotate or flip the image, nudge brightness and contrast, apply a one-tap filter, then set an exact pixel width and height if you need a precise output size. When you're happy with the result, hit Download — MooCrop exports a PNG (with transparency for circle crops), JPG, or WebP, with an adjustable compression level, straight to your device. If you loaded several photos, they're bundled into a single ZIP so you don't have to download each one separately.</p>
+
+    <h2>Features that are usually paywalled elsewhere — free here</h2>
+    <ul>
+      <li><strong>Social &amp; platform size presets</strong> — exact dimensions for Instagram, YouTube, LinkedIn, X/Twitter, Facebook, and print, without doing the math yourself.</li>
+      <li><strong>One-tap filters</strong> — black &amp; white, sepia, vintage, vivid, and cool tones, applied before export.</li>
+      <li><strong>Adjustable compression</strong> — a quality slider for JPG/WebP exports with a live estimated file size, similar to paid image-optimization tools.</li>
+      <li><strong>Automatic metadata removal</strong> — because MooCrop redraws your photo onto a fresh canvas before export, hidden EXIF data (like GPS location) is stripped from every download automatically, at no extra cost.</li>
+      <li><strong>Unlimited batch export</strong> — crop as many photos as your device can handle and download them all as one ZIP.</li>
+    </ul>
 
     <h2>Frequently asked questions</h2>
     <div class="faq-item">
@@ -684,11 +801,19 @@
     </div>
     <div class="faq-item">
       <h3>What image formats can I use?</h3>
-      <p>You can upload common formats like JPG, PNG, WebP, and GIF, and export the cropped result as a PNG or JPG.</p>
+      <p>You can upload common formats like JPG, PNG, WebP, and GIF, and export the cropped result as a PNG, JPG, or WebP.</p>
     </div>
     <div class="faq-item">
       <h3>Can I crop more than one photo at a time?</h3>
       <p>Yes. Select multiple files and MooCrop will let you adjust and crop each one, then bundle them into a single ZIP download.</p>
+    </div>
+    <div class="faq-item">
+      <h3>Do the presets and filters cost anything?</h3>
+      <p>No. Social-media size presets, filters, and adjustable JPG/WebP compression are all included for free — no premium tier or watermark.</p>
+    </div>
+    <div class="faq-item">
+      <h3>Does MooCrop remove hidden location data from my photos?</h3>
+      <p>Yes, automatically. Because your photo is redrawn onto a canvas before export, embedded metadata such as GPS coordinates and camera details is not carried over to the downloaded file.</p>
     </div>
     <div class="faq-item">
       <h3>Is there a size or quality limit?</h3>
@@ -778,6 +903,12 @@
   const formatHint = document.getElementById('formatHint');
   const footnote = document.getElementById('footnote');
   const statusLive = document.getElementById('statusLive');
+  const presetChips = document.getElementById('presetChips');
+  const filterRow = document.getElementById('filterRow');
+  const qualityRow = document.getElementById('qualityRow');
+  const qualityInput = document.getElementById('qualityInput');
+  const qualityVal = document.getElementById('qualityVal');
+  const sizeEstimate = document.getElementById('sizeEstimate');
 
   const MIN_PX = 10;
 
@@ -785,11 +916,20 @@
   let activeIndex = 0;
   let nextId = 1;
 
+  const FILTER_CSS = {
+    none: '',
+    grayscale: 'grayscale(1)',
+    sepia: 'sepia(0.85) contrast(1.02)',
+    vintage: 'sepia(0.35) saturate(1.15) contrast(1.05) brightness(1.02)',
+    vivid: 'saturate(1.6) contrast(1.08)',
+    cool: 'saturate(1.1) hue-rotate(-8deg) brightness(1.02)'
+  };
+
   let state = {
     shape: 'rect',        // rect | square | circle
     ratio: null,          // number (w/h) or null for free
     lockOutputRatio: true,
-    format: 'png',        // png | jpg
+    format: 'png',        // png | jpg | webp
     box: {x:0,y:0,w:0,h:0}, // display px, relative to stage
     displayScale: 1,      // natural / display
     naturalW: 0, naturalH: 0,
@@ -797,7 +937,9 @@
     flipH: false,
     flipV: false,
     brightness: 0,         // -100..100
-    contrast: 0            // -100..100
+    contrast: 0,           // -100..100
+    filter: 'none',        // none | grayscale | sepia | vintage | vivid | cool
+    quality: 0.92           // 0.3..1, used for jpg/webp export
   };
 
   let pendingFrac = null;      // carry crop box proportionally when switching photos
@@ -936,7 +1078,8 @@
   }
 
   function filterCSS(){
-    return `brightness(${100 + state.brightness}%) contrast(${100 + state.contrast}%)`;
+    const preset = FILTER_CSS[state.filter] || '';
+    return `brightness(${100 + state.brightness}%) contrast(${100 + state.contrast}%) ${preset}`.trim();
   }
 
   function activeImage(){ return images[activeIndex]; }
@@ -1245,13 +1388,36 @@
         positionFormatPill();
         updateDownloadLabel();
       }
-      formatHint.textContent = 'Circle crops always export as PNG — JPG can\'t store a transparent background.';
+      formatHint.textContent = 'Circle crops can\'t export as JPG — JPG can\'t store a transparent background. PNG and WebP both work.';
     } else {
       jpgBtn.disabled = false;
       formatHint.textContent = state.format === 'jpg'
         ? 'JPG has no transparency, so a solid background is used.'
-        : 'PNG keeps a transparent background for circle crops.';
+        : (state.format === 'webp' ? 'WebP keeps transparency and usually compresses smaller than PNG.' : 'PNG keeps a transparent background for circle crops.');
     }
+    updateQualityUI();
+  }
+
+  function updateQualityUI(){
+    const needsQuality = state.format === 'jpg' || state.format === 'webp';
+    qualityRow.style.display = needsQuality ? '' : 'none';
+    if(needsQuality) estimateFileSize();
+  }
+
+  let estimateTimer = null;
+  function estimateFileSize(){
+    clearTimeout(estimateTimer);
+    estimateTimer = setTimeout(async ()=>{
+      if(!images.length){ sizeEstimate.textContent = '—'; return; }
+      try{
+        const item = images[activeIndex];
+        const { blob } = await cropOneImage(item);
+        const kb = blob.size / 1024;
+        sizeEstimate.textContent = kb > 1024 ? `${(kb/1024).toFixed(2)} MB` : `${Math.round(kb)} KB`;
+      } catch(err){
+        sizeEstimate.textContent = '—';
+      }
+    }, 200);
   }
 
   // ---------- File type (PNG / JPG) ----------
@@ -1271,12 +1437,73 @@
       updateDownloadLabel();
       formatHint.textContent = state.format === 'jpg'
         ? 'JPG has no transparency, so a solid background is used.'
-        : 'PNG keeps a transparent background for circle crops.';
+        : (state.format === 'webp' ? 'WebP keeps transparency and usually compresses smaller than PNG.' : 'PNG keeps a transparent background for circle crops.');
+      updateQualityUI();
       trackEvent('format_changed', {format: state.format});
     });
   });
   positionFormatPill();
   syncFormatAvailability();
+
+  qualityInput.addEventListener('input', ()=>{
+    state.quality = Number(qualityInput.value) / 100;
+    qualityVal.textContent = `${qualityInput.value}%`;
+    estimateFileSize();
+  });
+  qualityInput.addEventListener('change', ()=>{ trackEvent('quality_changed', {quality: state.quality}); });
+
+  // ---------- Filters ----------
+  filterRow.querySelectorAll('.filter-swatch').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      filterRow.querySelectorAll('.filter-swatch').forEach(b=>{ b.classList.remove('active'); b.setAttribute('aria-pressed','false'); });
+      btn.classList.add('active');
+      btn.setAttribute('aria-pressed','true');
+      state.filter = btn.dataset.filter;
+      sourceImg.style.filter = filterCSS();
+      if(qualityRow.style.display !== 'none') estimateFileSize();
+      trackEvent('filter_changed', {filter: state.filter});
+    });
+  });
+
+  // ---------- Social & platform presets ----------
+  presetChips.querySelectorAll('.preset-chip').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      presetChips.querySelectorAll('.preset-chip').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const w = Number(btn.dataset.w), h = Number(btn.dataset.h), shape = btn.dataset.shape;
+
+      const shapeBtn = shapeSeg.querySelector(`[data-shape="${shape}"]`);
+      if(shapeBtn && !shapeBtn.classList.contains('active')) shapeBtn.click();
+
+      if(shape === 'rect'){
+        const ratioStr = simplifyRatio(w, h);
+        let chip = [...ratioChips.querySelectorAll('.chip')].find(c=>c.dataset.ratio === ratioStr);
+        if(!chip){
+          chip = [...ratioChips.querySelectorAll('.chip')].find(c=>c.dataset.ratio === 'free');
+        }
+        if(chip) chip.click();
+      }
+
+      widthInput.value = w;
+      heightInput.value = h;
+      lockSwitch.classList.remove('on');
+      lockSwitch.setAttribute('aria-checked','false');
+      state.lockOutputRatio = false;
+      handleWidthChange();
+      handleHeightChange();
+      sizeHint.textContent = `Exporting at exactly ${w}×${h}px.`;
+      updateQualityUI();
+      announce(`Preset applied: ${w} by ${h} pixels.`);
+      trackEvent('preset_applied', {w, h, shape});
+    });
+  });
+
+  function simplifyRatio(w, h){
+    function gcd(a,b){ return b === 0 ? a : gcd(b, a % b); }
+    const g = gcd(w, h) || 1;
+    return `${w/g}:${h/g}`;
+  }
 
   function updateDownloadLabel(){
     downloadBtn.textContent = images.length > 1
@@ -1467,6 +1694,13 @@
     brightnessVal.textContent = '0'; contrastVal.textContent = '0';
     flipHBtn.setAttribute('aria-pressed','false');
     flipVBtn.setAttribute('aria-pressed','false');
+    state.filter = 'none';
+    filterRow.querySelectorAll('.filter-swatch').forEach(b=>{
+      const isNone = b.dataset.filter === 'none';
+      b.classList.toggle('active', isNone);
+      b.setAttribute('aria-pressed', String(isNone));
+    });
+    presetChips.querySelectorAll('.preset-chip').forEach(b=>b.classList.remove('active'));
     forceFreshBox = true;
     refreshPreview();
     announce('Crop reset.');
@@ -1546,6 +1780,7 @@
     }
 
     const isJpg = state.format === 'jpg' && state.shape !== 'circle';
+    const isWebp = state.format === 'webp';
     let exportCanvas = canvas;
     if(isJpg){
       exportCanvas = document.createElement('canvas');
@@ -1556,9 +1791,9 @@
       jctx.drawImage(canvas, 0, 0);
     }
 
-    const mimeType = isJpg ? 'image/jpeg' : 'image/png';
-    const extension = isJpg ? 'jpg' : 'png';
-    const quality = isJpg ? 0.92 : undefined;
+    const mimeType = isJpg ? 'image/jpeg' : (isWebp ? 'image/webp' : 'image/png');
+    const extension = isJpg ? 'jpg' : (isWebp ? 'webp' : 'png');
+    const quality = (isJpg || isWebp) ? state.quality : undefined;
 
     const blob = await new Promise(resolve => exportCanvas.toBlob(resolve, mimeType, quality));
     const baseName = (item.name || 'photo').replace(/\.[^./\\]+$/, '');
